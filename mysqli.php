@@ -14,12 +14,12 @@ define('SQL_LAYER', 'mysqli');
 #[AllowDynamicProperties]
 class sql_db
 {
-    var $db_connect_id;
-    var $query_result;
-    var $return_on_error = false;
-    var $transaction = false;
-    var $sql_report = '';
-    var $sql_time = 0;
+    public $db_connect_id;
+    public $query_result;
+    public $return_on_error = false;
+    public $transaction = false;
+    public $sql_report = '';
+    public $sql_time = 0;
 
     //
     // Constructor

@@ -23,7 +23,8 @@ if ($allowlocale && isset($_COOKIE['locale'])) {
         ($tmp == 'nl') ||
         ($tmp == 'sv') ||
         ($tmp == 'fi') ||
-        ($tmp == 'ru')) {
+        ($tmp == 'ru') ||
+        ($tmp == 'cs')) {
             $locale = $tmp;
         }
 }
@@ -107,6 +108,17 @@ case 'sv':
         'swedish',
         'sve_SE',
         'swe_SE',
+        );
+    break;
+case 'cs':
+    $localeset = array(
+        'cs_CZ',
+        'cs_CZ.UTF-8',
+        'cs_CZ.ISO8859-2',
+        'cs_CZ.iso88592',
+        'czech',
+        'ces_CZ',
+        'cze_CZ',
         );
     break;
 }

@@ -6,6 +6,8 @@ if (!defined('IN_SCRIPT')) {
 
 // MySQL Layer from phpBB2 - original sources available at http://sf.net
 // Id: mysql.php,v 1.2 2003/03/17 23:05:17 psotfx Exp
+// DEPRECATED: This file uses the old mysql_* extension which was removed in PHP 7.0.
+// Use $dbtype = 'mysqli' in siteconfig.php instead.
 if (!defined('SQL_LAYER'))
 {
 
@@ -13,12 +15,12 @@ define('SQL_LAYER', 'mysql');
 
 class sql_db
 {
-    var $db_connect_id;
-    var $query_result;
-    var $return_on_error = false;
-    var $transaction = false;
-    var $sql_report = '';
-    var $sql_time = 0;
+    public $db_connect_id;
+    public $query_result;
+    public $return_on_error = false;
+    public $transaction = false;
+    public $sql_report = '';
+    public $sql_time = 0;
 
     //
     // Constructor

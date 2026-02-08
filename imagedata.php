@@ -261,7 +261,7 @@ if ($ii) {
 
     $totdvd = $tothddvd = $totbluray = 0;
     $sql = "SELECT builtinmediatype AS bi,COUNT(*) AS count FROM $DVD_TABLE WHERE collectiontype='owned' GROUP BY builtinmediatype";
-    $result = $db->sql_query($sql) or die(mysql_error());
+    $result = $db->sql_query($sql) or die($db->sql_error());
     while ($mtype = $db->sql_fetchrow($result)) {
         switch ($mtype['bi']) {
         case MEDIA_TYPE_DVD:
@@ -328,7 +328,7 @@ if ($ii) {
     if ( $last == '00000000' )
         $ii_verbose = true;
 
-    $result = $db->sql_query($sql) or die(mysql_error());
+    $result = $db->sql_query($sql) or die($db->sql_error());
     $cnt = 0;
     //$displayfreq = 100;   // now a global
     while ($row = $db->sql_fetchrow($result))

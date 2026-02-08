@@ -1644,6 +1644,7 @@ EOT;
     momItems[num++]=["Suomi", "javascript:top.setcookie('locale','fi',10*365);top.ChangeLang();", "_top", 1, "no"]
     momItems[num++]=["Nederlands", "javascript:top.setcookie('locale','nl',10*365);top.ChangeLang();", "_top", 1]
     momItems[num++]=["&#x420;&#x443;&#x441;&#x441;&#x43a;&#x438;&#x439;", "javascript:top.setcookie('locale','ru',10*365);top.ChangeLang();", "_top"]
+    momItems[num++]=["&#x10C;e&#x161;tina", "javascript:top.setcookie('locale','cs',10*365);top.ChangeLang();", "_top", 1]
 
 EOT;
     echo <<<EOT

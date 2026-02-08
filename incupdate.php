@@ -157,12 +157,12 @@ function TranslateDateTime($string) {
 }
 
 class BufferedInsert {
-var $db;
-var $max_packet;
-var $table;
-var $sql;
-var $room_left;
-var $col_names;
+    public $db;
+    public $max_packet;
+    public $table;
+    public $sql;
+    public $room_left;
+    public $col_names;
 
     function __construct(&$db, $max_packet, $table, $col_names) {
         $this->db = $db;

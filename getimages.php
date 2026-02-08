@@ -43,7 +43,7 @@ echo "<html>\n
     <td width=\"75\" align=\"center\" valign=\"middle\">back</td>\n
   </tr>\n";
 
-while($dvd = mysql_fetch_array($result)) {
+while($dvd = $db->sql_fetchrow($result)) {
 
     $getfront = false;
     $getback = false;

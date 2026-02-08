@@ -16,20 +16,18 @@ function strftimeReplacement(string $format, ?int $timestamp = null)
 }
 
 function UpdateUpdateLast($str='0||0|0|0|0|0') {
-    @list(
-        $x['Offset'],
-        $x['Filename'],
-        $x['Total'],
-        $x['Added'],
-        $x['Changed'],
-        $x['NewCollNum'],
-        $x['ConnectionId']
-    ) = explode('|', $str);
+    $parts = explode('|', $str);
+    $x['Offset'] = $parts[0] ?? '0';
+    $x['Filename'] = $parts[1] ?? '';
+    $x['Total'] = $parts[2] ?? '0';
+    $x['Added'] = $parts[3] ?? '0';
+    $x['Changed'] = $parts[4] ?? '0';
+    $x['NewCollNum'] = $parts[5] ?? '0';
+    $x['ConnectionId'] = $parts[6] ?? '-1';
     if (isset($x['Filename']) && $x['Filename'] != '') {
-        @list(
-            $x['Filename'],
-            $x['Filesize']
-        ) = explode('!', $x['Filename']);
+        $fparts = explode('!', $x['Filename']);
+        $x['Filename'] = $fparts[0] ?? '';
+        $x['Filesize'] = $fparts[1] ?? '';
     }
     if (!isset($x['ConnectionId']))
         $x['ConnectionId'] = '-1';
@@ -531,7 +529,13 @@ $replacement = array(
 }
 
 function my_mktime() {
-    @list($hours, $minutes, $seconds, $mon, $mday, $year) = func_get_args();
+    $args = func_get_args();
+    $hours = $args[0] ?? null;
+    $minutes = $args[1] ?? null;
+    $seconds = $args[2] ?? null;
+    $mon = $args[3] ?? null;
+    $mday = $args[4] ?? null;
+    $year = $args[5] ?? null;
     $temp = @getdate();
     if (!is_numeric($hours)) { $hours = $temp['hours']; }
     if (!is_numeric($minutes)) { $minutes = $temp['minutes']; }
@@ -554,7 +558,11 @@ function DecToIPv4($number) {
 }
 
 function IPv4ToDec($addr) {
-    @list($a, $b, $c, $d) = explode('.', $addr);
+    $parts = explode('.', $addr);
+    $a = $parts[0] ?? 0;
+    $b = $parts[1] ?? 0;
+    $c = $parts[2] ?? 0;
+    $d = $parts[3] ?? 0;
     return(((((($a<<8) + $b)<<8) + $c)<<8) + $d);
 }
 
