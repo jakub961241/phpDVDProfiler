@@ -1,0 +1,970 @@
+/* phpDVDProfiler Bootstrap custom styles */
+
+/* ===== Layout ===== */
+html, body {
+    height: 100%;
+}
+
+#dvd-sidebar {
+    height: calc(100vh - 56px);
+    overflow-y: auto;
+    border-right: 1px solid #dee2e6;
+    padding: 0;
+    background-color: #f8f9fa;
+}
+
+#main-content {
+    height: calc(100vh - 56px);
+    overflow-y: auto;
+    padding: 15px;
+}
+
+/* ===== Navbar ===== */
+.navbar {
+    padding: 0.25rem 0.5rem;
+}
+
+.navbar .form-select,
+.navbar .form-control {
+    font-size: 0.85rem;
+    padding: 0.2rem 0.5rem;
+}
+
+.navbar .btn {
+    font-size: 0.85rem;
+    padding: 0.2rem 0.5rem;
+}
+
+/* A-Z letter navigation */
+#letter-nav {
+    padding: 2px 0;
+    text-align: center;
+    background-color: var(--phpdvd-header-bg, #0000A0);
+}
+
+#letter-nav a {
+    color: #fff;
+    text-decoration: none;
+    padding: 1px 3px;
+    font-size: 0.85rem;
+    font-weight: bold;
+}
+
+#letter-nav a:hover {
+    color: #ff0;
+    text-decoration: underline;
+}
+
+#letter-nav a.active {
+    color: #ff0;
+    background-color: rgba(255,255,255,0.2);
+    border-radius: 3px;
+}
+
+/* Info line (DVD counts) */
+#info-line {
+    font-size: 0.75rem;
+    padding: 2px 8px;
+    background-color: #f0f0f0;
+    border-bottom: 1px solid #dee2e6;
+    color: #333;
+}
+
+/* ===== Sidebar DVD list ===== */
+#sidebar-header {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background-color: var(--phpdvd-header-bg, #0000A0);
+    color: #fff;
+    font-weight: bold;
+    font-size: 0.8rem;
+    padding: 4px 8px;
+}
+
+#sidebar-header a {
+    color: #fff;
+    text-decoration: none;
+}
+
+#sidebar-header a:hover {
+    color: #ff0;
+}
+
+#sidebar-list {
+    font-size: 0.85rem;
+}
+
+/* DVD list rows */
+.dvd-row {
+    padding: 3px 8px;
+    border-bottom: 1px solid #e9ecef;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.dvd-row:hover {
+    background-color: #e2e6ea;
+}
+
+.dvd-row.active {
+    background-color: #d0e0f0;
+    font-weight: bold;
+}
+
+.dvd-row-even {
+    background-color: #fff;
+}
+
+.dvd-row-odd {
+    background-color: #f5f7fa;
+}
+
+.dvd-row a {
+    color: #000;
+    text-decoration: none;
+    flex-grow: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.dvd-row a:hover {
+    color: #0000A0;
+}
+
+.dvd-row .col2, .dvd-row .col3 {
+    font-size: 0.75rem;
+    color: #666;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+/* Section divider in DVD list */
+.dvd-divider {
+    padding: 3px 12px;
+    font-weight: bold;
+    font-size: 0.8rem;
+    background-color: #BDD9A7;
+    color: #000;
+    border-bottom: 1px solid #aaa;
+}
+
+/* Box set toggle */
+.boxset-toggle {
+    cursor: pointer;
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 0.9rem;
+    color: #666;
+    border-radius: 3px;
+    background: #e9ecef;
+    line-height: 1;
+}
+
+.boxset-toggle:hover {
+    background: #ced4da;
+    color: #000;
+}
+
+/* Box set children container */
+.dvd-row[style*="padding-left"] {
+    border-left: 2px solid #BDD9A7;
+    font-size: 0.82rem;
+}
+
+/* Pagination in sidebar */
+.sidebar-pagination {
+    padding: 6px 8px;
+    background-color: var(--phpdvd-header-bg, #0000A0);
+    text-align: center;
+    position: sticky;
+    bottom: 0;
+}
+
+.sidebar-pagination a {
+    color: #fff;
+    padding: 0 6px;
+    font-size: 0.8rem;
+    text-decoration: none;
+}
+
+.sidebar-pagination a:hover {
+    color: #ff0;
+}
+
+.sidebar-pagination .page-current {
+    color: #ff0;
+    font-weight: bold;
+    padding: 0 4px;
+    font-size: 0.8rem;
+}
+
+.sidebar-pagination .item-count {
+    color: #ccc;
+    font-size: 0.75rem;
+}
+
+/* ===== Main content area - DVD detail ===== */
+/* Preserve old class styling for backward compat */
+.detail-title {
+    background-color: var(--phpdvd-header-bg, #0000A0);
+    color: #fff;
+    padding: 10px 15px;
+    font-size: 1.4rem;
+    border-radius: 4px 4px 0 0;
+}
+
+.detail-title a {
+    color: #fff;
+}
+
+.detail-body {
+    background-color: #BDD9A7;
+    padding: 10px;
+    border-radius: 0 0 4px 4px;
+}
+
+/* Data rows - label/value pairs */
+.detail-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.detail-table td {
+    padding: 3px 5px;
+    vertical-align: top;
+    font-size: 0.9rem;
+}
+
+.detail-table .label-cell {
+    font-weight: bold;
+    background-color: #BDD9A7;
+    color: #0000A0;
+    white-space: nowrap;
+    width: 160px;
+}
+
+.detail-table .value-cell {
+    background-color: #D9E1FF;
+    color: #000;
+}
+
+.detail-table .separator {
+    height: 2px;
+    background-color: #ADA9A9;
+    padding: 0;
+}
+
+/* Section headers (Audio, Extras, Cast) */
+.detail-section-header {
+    background-color: #BDD9A7;
+    color: #0000A0;
+    font-weight: bold;
+    font-size: 1rem;
+    padding: 5px 8px;
+    margin-top: 10px;
+    cursor: pointer;
+    border-radius: 3px;
+}
+
+.detail-section-header:hover {
+    background-color: #a8cc96;
+}
+
+/* Cover image */
+.cover-image {
+    max-width: 100%;
+    height: auto;
+    border: 2px solid #ADA9A9;
+    border-radius: 3px;
+}
+
+/* Quick nav links (Audio, Extras, Cast) */
+.quick-nav {
+    font-size: 0.75rem;
+    text-align: right;
+    padding: 4px;
+}
+
+.quick-nav a {
+    color: #fff;
+    margin-left: 5px;
+}
+
+/* ===== Backward compat: map old classes to new look ===== */
+/* These keep existing PHP-generated HTML working */
+.f1 {
+    background-color: var(--phpdvd-header-bg, #0000A0);
+    color: #fff;
+    font-size: 1.2rem;
+    text-align: center;
+    padding: 8px;
+}
+
+.f2 {
+    background-color: #D9E1FF;
+    color: #000;
+    padding: 3px 5px;
+    font-size: 0.9rem;
+    vertical-align: top;
+}
+
+.f2np {
+    background-color: #D9E1FF;
+    color: #000;
+    font-size: 0.9rem;
+}
+
+.f3 {
+    background-color: #BDD9A7;
+    color: #0000A0;
+    font-weight: bold;
+    padding: 3px 5px;
+    font-size: 0.9rem;
+    vertical-align: top;
+}
+
+.f3np {
+    background-color: #BDD9A7;
+    color: #0000A0;
+    font-weight: bold;
+    font-size: 0.9rem;
+}
+
+.f4 {
+    background-color: var(--phpdvd-header-bg, #0000A0);
+    color: #fff;
+    font-weight: bold;
+    padding: 3px 5px;
+    font-size: 0.9rem;
+}
+
+.f6 {
+    background-color: #BDD9A7;
+    color: #0000A0;
+    font-weight: bold;
+    font-size: 1rem;
+    padding: 3px 5px;
+}
+
+.bgl { background-color: #BDD9A7; }
+.bgd { background-color: #ADA9A9; }
+
+.t {
+    background-color: var(--phpdvd-header-bg, #0000A0);
+    color: #fff;
+    font-weight: bold;
+    padding: 3px;
+    font-size: 0.85rem;
+}
+
+.l, .o {
+    font-size: 0.85rem;
+    padding: 2px 3px;
+    vertical-align: top;
+}
+
+.l { background-color: #D9E1FF; }
+.o { background-color: #ADC0D3; }
+
+.a {
+    background-color: #BDD9A7;
+    font-weight: bold;
+    padding-left: 12px;
+    font-size: 0.85rem;
+}
+
+.s { font-size: 0.7rem; }
+.s1 { font-size: 0.85rem; }
+
+.line { background-color: #ADA9A9; height: 1px; }
+.line2 { background-color: #ADA9A9; height: 2px; }
+
+.nav2 {
+    background-color: var(--phpdvd-header-bg, #0000A0);
+    color: #BDD9A7;
+    font-weight: bold;
+    text-align: center;
+    padding: 2px;
+    font-size: 0.85rem;
+}
+
+.Divider, .GroupDivider {
+    font-weight: bold;
+    padding: 2px 8px;
+    border-radius: 2px;
+    margin: 2px 0;
+}
+
+.Divider {
+    background-image: linear-gradient(to bottom, #4a6fa5, #2a4a80);
+    color: #fff;
+}
+
+.GroupDivider {
+    background-image: linear-gradient(to bottom, #6a8fb5, #4a6f95);
+    color: #fff;
+}
+
+/* ===== Loading spinner ===== */
+.loading-spinner {
+    text-align: center;
+    padding: 40px;
+    color: #666;
+}
+
+.loading-spinner::after {
+    content: '';
+    display: block;
+    width: 32px;
+    height: 32px;
+    margin: 10px auto;
+    border: 3px solid #ddd;
+    border-top-color: #0000A0;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* ===== Mobile responsive ===== */
+@media (max-width: 767.98px) {
+    #dvd-sidebar {
+        height: auto;
+        max-height: 50vh;
+        border-right: none;
+        border-bottom: 1px solid #dee2e6;
+    }
+
+    #main-content {
+        height: auto;
+        min-height: 50vh;
+    }
+
+    .detail-title {
+        font-size: 1.1rem;
+    }
+
+    .cover-image {
+        max-width: 200px;
+    }
+
+    /* Hide sidebar on mobile, use offcanvas */
+    #dvd-sidebar.mobile-hidden {
+        display: none;
+    }
+}
+
+@media (min-width: 768px) {
+    /* On desktop, sidebar toggle button hidden */
+    #sidebar-toggle-btn {
+        display: none !important;
+    }
+}
+
+/* ===== Offcanvas sidebar for mobile ===== */
+.offcanvas-body #sidebar-list-mobile {
+    font-size: 0.85rem;
+}
+
+/* ===== Gallery cards ===== */
+.gallery-card {
+    transition: transform 0.2s;
+}
+
+.gallery-card:hover {
+    transform: scale(1.03);
+}
+
+.gallery-card img {
+    border-radius: 3px;
+}
+
+/* ===== Statistics ===== */
+.stats-section {
+    margin-bottom: 20px;
+}
+
+.stats-section h5 {
+    background-color: var(--phpdvd-header-bg, #0000A0);
+    color: #fff;
+    padding: 8px 12px;
+    border-radius: 4px;
+}
+
+/* ===== Standalone label/value (DVD detail Bootstrap grid) ===== */
+.label-cell {
+    font-weight: bold;
+    background-color: #BDD9A7;
+    color: #0000A0;
+    font-size: 0.9rem;
+    padding: 3px 8px;
+    border-radius: 2px;
+}
+
+.value-cell {
+    background-color: #D9E1FF;
+    color: #000;
+    font-size: 0.9rem;
+    padding: 3px 8px;
+    border-radius: 2px;
+}
+
+/* ===== Statistics container ===== */
+.stats-container {
+    padding: 10px;
+}
+
+.stats-container .table {
+    font-size: 0.9rem;
+}
+
+/* ===== Gallery container (AJAX mode) ===== */
+.gallery-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 5px;
+}
+
+/* ===== Dark theme: Base overrides for Bootstrap 5.3.3 dark mode ===== */
+[data-bs-theme="dark"] body {
+    background-color: #212529 !important;
+    color: #dee2e6 !important;
+    --phpdvd-header-bg: #2a5a9a;
+}
+
+[data-bs-theme="dark"] a { color: #6ea8fe; }
+[data-bs-theme="dark"] a:hover { color: #9ec5fe; }
+[data-bs-theme="dark"] a.n { color: #6ea8fe; }
+[data-bs-theme="dark"] a.n:hover { color: #9ec5fe; }
+[data-bs-theme="dark"] a.n1 { color: #6ea8fe; }
+[data-bs-theme="dark"] a.n1:hover { color: #9ec5fe; }
+
+/* Old classes with configurable colors - dark overrides */
+[data-bs-theme="dark"] .f1 {
+    background-color: #2a5a9a;
+    color: #e0e0e0;
+    border-radius: 4px;
+    margin-bottom: 8px;
+}
+
+[data-bs-theme="dark"] .f2,
+[data-bs-theme="dark"] .f2np {
+    background-color: #2b3035;
+    color: #dee2e6;
+    border-bottom: 1px solid #3a3f44;
+    padding: 4px 8px;
+}
+
+[data-bs-theme="dark"] .f3,
+[data-bs-theme="dark"] .f3np {
+    background-color: #1a3340;
+    color: #82c8c8;
+    border-bottom: 1px solid #3a3f44;
+    padding: 4px 8px;
+}
+
+[data-bs-theme="dark"] .f4 {
+    background-color: #2a5a9a;
+    color: #e0e0e0;
+}
+
+[data-bs-theme="dark"] .f6 {
+    background-color: #1a3340;
+    color: #82c8c8;
+}
+
+[data-bs-theme="dark"] .bgl {
+    background-color: transparent;
+    border-collapse: collapse;
+}
+
+[data-bs-theme="dark"] .bgd {
+    background-color: #3a3f44;
+}
+
+[data-bs-theme="dark"] .t {
+    background-color: #2a5a9a;
+    color: #e0e0e0;
+}
+
+[data-bs-theme="dark"] .l { background-color: #2b3035; color: #dee2e6; }
+[data-bs-theme="dark"] .o { background-color: #343a40; color: #dee2e6; }
+
+[data-bs-theme="dark"] .a {
+    background-color: #1a3340;
+    color: #82c8c8;
+}
+
+[data-bs-theme="dark"] .u { background-color: #2b3035; color: #dee2e6; }
+[data-bs-theme="dark"] .v { background-color: #343a40; color: #dee2e6; }
+[data-bs-theme="dark"] .x { background-color: #2b3035; color: #dee2e6; }
+[data-bs-theme="dark"] .y { background-color: #343a40; color: #dee2e6; }
+[data-bs-theme="dark"] .z1 { background-color: #2b3035; color: #dee2e6; }
+[data-bs-theme="dark"] .z2 { background-color: #1a3340; color: #82c8c8; }
+[data-bs-theme="dark"] .f5, [data-bs-theme="dark"] .f5b { background-color: #1a3340; color: #adb5bd; }
+[data-bs-theme="dark"] .f7 { background-color: #2b3035; color: #dee2e6; }
+[data-bs-theme="dark"] .f8 { background-color: #1a3340; }
+[data-bs-theme="dark"] .f9 { background-color: #2b3035; }
+[data-bs-theme="dark"] .hdlogo, [data-bs-theme="dark"] .fthumb { background-color: #212529; }
+[data-bs-theme="dark"] .nav { background-color: #2a5a9a; color: #adb5bd; }
+[data-bs-theme="dark"] .s { color: #8b929a; }
+[data-bs-theme="dark"] .s1 { color: #adb5bd; }
+[data-bs-theme="dark"] .input { color: #dee2e6; }
+[data-bs-theme="dark"] img.b { border-color: #3a3f44; }
+[data-bs-theme="dark"] .URLref { color: #6ea8fe; }
+
+[data-bs-theme="dark"] .line,
+[data-bs-theme="dark"] .line2 {
+    background-color: #3a3f44;
+}
+
+[data-bs-theme="dark"] .nav2 {
+    background-color: #2a5a9a;
+    color: #82c8c8;
+}
+
+[data-bs-theme="dark"] .label-cell {
+    background-color: #1a3340;
+    color: #82c8c8;
+}
+
+[data-bs-theme="dark"] .value-cell {
+    background-color: #2b3035;
+    color: #dee2e6;
+}
+
+/* Auto-style tables inside #main-content like Bootstrap tables */
+[data-bs-theme="dark"] #main-content table {
+    width: 100%;
+    border-collapse: collapse;
+    color: #dee2e6;
+    font-size: 0.9rem;
+}
+
+[data-bs-theme="dark"] #main-content table td,
+[data-bs-theme="dark"] #main-content table th {
+    padding: 4px 8px;
+    border-bottom: 1px solid #3a3f44;
+    vertical-align: middle;
+}
+
+[data-bs-theme="dark"] #main-content table th {
+    background-color: #2a5a9a;
+    color: #e0e0e0;
+    font-weight: 600;
+}
+
+[data-bs-theme="dark"] #main-content table tr:hover td {
+    background-color: rgba(255,255,255,0.05);
+}
+
+/* Fix <center> tags inside AJAX content */
+#main-content center {
+    display: block;
+    text-align: center;
+    max-width: 90%;
+    margin: 0 auto 12px;
+}
+
+/* Make old-style table forms look better in dark theme */
+[data-bs-theme="dark"] #main-content input[type="radio"] {
+    accent-color: #0d6efd;
+    margin: 0 4px;
+}
+
+[data-bs-theme="dark"] #main-content form {
+    margin: 0;
+}
+
+[data-bs-theme="dark"] .f1sm {
+    background-color: #2a5a9a;
+    color: #e0e0e0;
+    font-size: 0.85rem;
+    padding: 4px 8px;
+}
+
+/* Old table links inherit dark theme colors */
+[data-bs-theme="dark"] #main-content table a {
+    color: #6ea8fe;
+}
+
+[data-bs-theme="dark"] #main-content table a:hover {
+    color: #9ec5fe;
+}
+
+/* Stats-specific: decade/year selector tables */
+[data-bs-theme="dark"] #main-content table[border] {
+    border: 1px solid #3a3f44 !important;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 8px;
+}
+
+[data-bs-theme="dark"] #main-content table[border] td {
+    border: 1px solid #3a3f44;
+    padding: 4px;
+}
+
+[data-bs-theme="dark"] #main-content table[border] a {
+    cursor: pointer;
+    color: #6ea8fe;
+}
+
+/* JPGraph images center nicely */
+[data-bs-theme="dark"] #main-content center img[name="jpgraph"],
+[data-bs-theme="dark"] #main-content img[name="jpgraph"] {
+    max-width: 100%;
+    height: auto;
+    border-radius: 4px;
+    margin: 8px 0;
+}
+
+/* Gallery in dark mode */
+[data-bs-theme="dark"] .gallery {
+    color: #dee2e6;
+}
+
+[data-bs-theme="dark"] .gallery img {
+    border-radius: 4px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+}
+
+/* ws.php watched statistics in dark mode */
+[data-bs-theme="dark"] #main-content center > table {
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+/* ===== Dark theme: Sidebar & Layout ===== */
+[data-bs-theme="dark"] #dvd-sidebar {
+    background-color: #1a1d21;
+    border-right-color: #3a3f44;
+}
+
+[data-bs-theme="dark"] #info-line {
+    background-color: #2b3035;
+    border-bottom-color: #3a3f44;
+    color: #adb5bd;
+}
+
+[data-bs-theme="dark"] .dvd-row {
+    border-bottom-color: #3a3f44;
+}
+
+[data-bs-theme="dark"] .dvd-row:hover {
+    background-color: #2c3034;
+}
+
+[data-bs-theme="dark"] .dvd-row.active {
+    background-color: #2a5080;
+}
+
+[data-bs-theme="dark"] .dvd-row-even {
+    background-color: #212529;
+}
+
+[data-bs-theme="dark"] .dvd-row-odd {
+    background-color: #1a1d21;
+}
+
+[data-bs-theme="dark"] .dvd-row a {
+    color: #dee2e6;
+}
+
+[data-bs-theme="dark"] .dvd-row a:hover {
+    color: #6ea8fe;
+}
+
+[data-bs-theme="dark"] .dvd-row .col2,
+[data-bs-theme="dark"] .dvd-row .col3 {
+    color: #8b929a;
+}
+
+[data-bs-theme="dark"] .boxset-toggle {
+    background: #3a3f44;
+    color: #adb5bd;
+}
+
+[data-bs-theme="dark"] .boxset-toggle:hover {
+    background: #4a5056;
+    color: #fff;
+}
+
+[data-bs-theme="dark"] .dvd-row[style*="padding-left"] {
+    border-left-color: #1a3340;
+}
+
+[data-bs-theme="dark"] .dvd-divider {
+    background-color: #1a3340;
+    color: #82c8c8;
+    border-bottom-color: #3a3f44;
+}
+
+/* Dark theme: Detail view */
+[data-bs-theme="dark"] .detail-body {
+    background-color: #1a1d21;
+}
+
+[data-bs-theme="dark"] .detail-table .label-cell {
+    background-color: #1a3340;
+    color: #82c8c8;
+}
+
+[data-bs-theme="dark"] .detail-table .value-cell {
+    background-color: #2b3035;
+    color: #dee2e6;
+}
+
+[data-bs-theme="dark"] .detail-table .separator {
+    background-color: #3a3f44;
+}
+
+[data-bs-theme="dark"] .detail-section-header {
+    background-color: #1a3340;
+    color: #82c8c8;
+}
+
+[data-bs-theme="dark"] .detail-section-header:hover {
+    background-color: #24404f;
+}
+
+[data-bs-theme="dark"] .cover-image {
+    border-color: #3a3f44;
+}
+
+[data-bs-theme="dark"] .detail-body hr {
+    border-color: #3a3f44;
+    opacity: 0.5;
+}
+
+/* Dark theme: Divider classes */
+[data-bs-theme="dark"] .Divider {
+    background-image: linear-gradient(to bottom, #2a5a9a, #1a4a7a);
+}
+
+[data-bs-theme="dark"] .GroupDivider {
+    background-image: linear-gradient(to bottom, #3a6aaa, #2a5080);
+}
+
+/* Dark theme: loading spinner */
+[data-bs-theme="dark"] .loading-spinner {
+    color: #adb5bd;
+}
+
+[data-bs-theme="dark"] .loading-spinner::after {
+    border-color: #3a3f44;
+    border-top-color: #6ea8fe;
+}
+
+/* ===== Popup (actor/crew/studio filmography) ===== */
+.popup-header {
+    background-color: #f0f0f0;
+    border-radius: 4px 4px 0 0;
+}
+
+.popup-header img {
+    border-radius: 4px;
+}
+
+.popup-entry {
+    transition: background-color 0.15s;
+}
+
+.popup-entry:hover {
+    background-color: rgba(0,0,0,0.03);
+}
+
+.popup-entry img {
+    border-radius: 3px;
+    border: 1px solid #dee2e6;
+}
+
+.popup-entry-title a {
+    color: #0000A0;
+    text-decoration: none;
+}
+
+.popup-entry-title a:hover {
+    text-decoration: underline;
+}
+
+.popup-entry-table {
+    font-size: 0.85rem;
+    border-collapse: collapse;
+}
+
+.popup-entry-table td {
+    padding: 1px 4px;
+    vertical-align: top;
+}
+
+/* Popup divider classes (from OutputRoles) */
+.DividerPopup {
+    background-image: linear-gradient(to bottom, #4a6fa5, #2a4a80);
+    color: #fff;
+    font-weight: bold;
+    padding: 2px 8px;
+    border-radius: 2px;
+}
+
+.GroupDividerPopup {
+    background-image: linear-gradient(to bottom, #6a8fb5, #4a6f95);
+    color: #fff;
+    font-weight: bold;
+    padding: 2px 8px;
+    border-radius: 2px;
+}
+
+/* Dark theme: Popup */
+[data-bs-theme="dark"] .popup-header {
+    background-color: #2b3035;
+    border-color: #3a3f44;
+}
+
+[data-bs-theme="dark"] .popup-entry:hover {
+    background-color: rgba(255,255,255,0.05);
+}
+
+[data-bs-theme="dark"] .popup-entry img {
+    border-color: #3a3f44;
+}
+
+[data-bs-theme="dark"] .popup-entry-title a {
+    color: #6ea8fe;
+}
+
+[data-bs-theme="dark"] .popup-entry-table td {
+    border-bottom: none;
+}
+
+[data-bs-theme="dark"] .DividerPopup {
+    background-image: linear-gradient(to bottom, #2a5a9a, #1a4a7a);
+}
+
+[data-bs-theme="dark"] .GroupDividerPopup {
+    background-image: linear-gradient(to bottom, #3a6aaa, #2a5080);
+}
+
+/* ===== Print styles ===== */
+@media print {
+    .navbar, #dvd-sidebar, .sidebar-pagination, #letter-nav, #info-line {
+        display: none !important;
+    }
+
+    #main-content {
+        height: auto !important;
+        overflow: visible !important;
+    }
+}

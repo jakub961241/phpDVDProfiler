@@ -1,3 +1,25 @@
+Version 20260211 (fork by jakub961241)
+Changes since version 20260208:
+- feature: web-based XML upload — new `import/` directory with upload form on the update page, allowing collection.xml upload from the browser instead of requiring FTP access
+- feature: TMDB Cover Fetcher (`fetch_covers.php`) — browse collection, search TMDB for movie posters, download covers with thumbnails; includes auto-fetch for all missing covers
+- feature: `config/localsiteconfig.php.example` — example configuration file with all important settings and comments, ready to copy and customize
+- feature: TMDB API key now configurable in `install.php` (Step 1) and `localsiteconfig.php` instead of being hardcoded
+- feature: installer (`install.php`) — web-based setup wizard that creates `localsiteconfig.php`, checks directory permissions, and initializes the database schema
+- feature: Bootstrap 5.3.3 dark theme applied across the entire application (index, admin, statistics, graphs, includes)
+- feature: complete translations for all 10 language files (en, cs, de, dk, fi, fr, nl, no, ru, sv) — 900+ new translated strings covering upload UI, cover fetcher, preferences, chooser, statistics, graphs, link categories, color formats, and crew roles
+- feature: sidebar sort header with column labels
+- feature: `Titles Per Page` pagination preference with translations in all languages
+- refactor: folder reorganization — PHP files moved from root into `core/`, `pages/`, `includes/`, `admin/`, `graphs/` subdirectories with `bootstrap.php` autoloader and `.htaccess` rewrites for backward compatibility
+- fix: `statistics.php` — `round(0, INF)` TypeError when `log10()` returns `-INF` in `MakeAPercentage()`
+- fix: `ws.php` — DISTINCT + ORDER BY errors with unqualified `timestamp` column in 4 queries (Last/Best/Worst/Me Watched)
+- fix: `ws.php` — null array access in `get_watchers()` and `me_watched` when no rows returned
+- fix: `popup.php` — `only_full_group_by` SQL mode error in actor/credit filmography queries (ORDER BY without GROUP BY)
+- fix: `functions.php` — `mb_convert_encoding()` deprecation with null input
+- fix: `incupdate.php` — duplicate key handling on insert
+- fix: DVD detail rendering issues with cover display
+- fix: favicon path corrected
+- removed: `db/consistancy.sql` — unused diagnostic SQL script
+
 Version 20260208 (fork by jakub961241)
 Changes since version 20250511:
 - feature: added complete Czech translation (`lang_cs.php`) with 900+ translated strings including UI labels, genre names, country names, audio languages, crew roles and statistics

@@ -1,0 +1,12 @@
+	- boxset association doesn't occur when searching. This is
+	  because I can't get the records to order properly.
+	  [Known limitation: search results span across boxset parents,
+	   SQL ordering can't guarantee parents before children.]
+
+	FIXED:
+	- collection=loaned now includes boxchildren via subquery
+	- TitlesPerPage userpref added (cookie: titlesperpage)
+	- pagination now shows numbered pages (AJAX sidebar)
+	- boxset spacing improved (CSS: toggle button, left border for children)
+	- GD library check added (resize_jpg, fetch_covers, ws.php)
+	- update offset bug: reset offset on file size change, stricter <DVD> tag matching

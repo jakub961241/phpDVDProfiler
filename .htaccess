@@ -1,0 +1,45 @@
+RewriteEngine On
+
+# Pages
+RewriteRule ^popup\.php$ pages/popup.php [L,QSA]
+RewriteRule ^gallery\.php$ pages/gallery.php [L,QSA]
+RewriteRule ^ws\.php$ pages/ws.php [L,QSA]
+RewriteRule ^rss\.php$ pages/rss.php [L,QSA]
+RewriteRule ^smallshow\.php$ pages/smallshow.php [L,QSA]
+RewriteRule ^BorrowADVD\.php$ pages/BorrowADVD.php [L,QSA]
+RewriteRule ^Chooser\.php$ pages/Chooser.php [L,QSA]
+RewriteRule ^Picker\.php$ pages/Picker.php [L,QSA]
+RewriteRule ^userpref\.php$ pages/userpref.php [L,QSA]
+RewriteRule ^summary\.php$ pages/summary.php [L,QSA]
+RewriteRule ^handleloans\.php$ pages/handleloans.php [L,QSA]
+RewriteRule ^MakeAnImage\.php$ pages/MakeAnImage.php [L,QSA]
+RewriteRule ^getimages\.php$ pages/getimages.php [L,QSA]
+RewriteRule ^no_coo\.php$ pages/no_coo.php [L,QSA]
+RewriteRule ^wrong_srp\.php$ pages/wrong_srp.php [L,QSA]
+RewriteRule ^showcolors\.php$ pages/showcolors.php [L,QSA]
+
+# Admin tools
+RewriteRule ^ForceDatabaseUpgrade\.php$ admin/ForceDatabaseUpgrade.php [L,QSA]
+RewriteRule ^checkruntimes\.php$ admin/checkruntimes.php [L,QSA]
+RewriteRule ^checktables\.php$ admin/checktables.php [L,QSA]
+RewriteRule ^check_credits\.php$ admin/check_credits.php [L,QSA]
+RewriteRule ^CleanCommon\.php$ admin/CleanCommon.php [L,QSA]
+RewriteRule ^ConvertUTF8FilenamesToCP1252\.php$ admin/ConvertUTF8FilenamesToCP1252.php [L,QSA]
+
+# Graphs
+RewriteRule ^gr_by(.+)\.php$ graphs/gr_by$1.php [L,QSA]
+
+# JS/CSS generators
+RewriteRule ^format\.css\.php$ js/format.css.php [L,QSA]
+RewriteRule ^momItems\.js\.php$ js/momItems.js.php [L,QSA]
+RewriteRule ^SmartUpdater\.js\.php$ js/SmartUpdater.js.php [L,QSA]
+
+# Static JS/CSS files
+RewriteRule ^main\.js$ js/main.js [L]
+RewriteRule ^mom\.js$ js/mom.js [L]
+RewriteRule ^navframe\.js$ js/navframe.js [L]
+RewriteRule ^top\.js$ js/top.js [L]
+RewriteRule ^JavascriptOnerr\.js$ js/JavascriptOnerr.js [L]
+RewriteRule ^wz_tooltip\.js$ js/wz_tooltip.js [L]
+RewriteRule ^custom\.css$ js/custom.css [L]
+RewriteRule ^smallshow\.css$ js/smallshow.css [L]

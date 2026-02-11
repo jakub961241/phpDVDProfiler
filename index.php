@@ -1,4 +1,5 @@
 <?php
+require_once(__DIR__ . '/bootstrap.php');
 defined('IN_SCRIPT') || define('IN_SCRIPT', 1);
 include_once('version.php');
 include_once('global.php');
@@ -10,9 +11,14 @@ function UpdateDataRow(&$dvd) {
 
 if (isset($img)) $action = 'image';
 if (!isset($action)) $action = 'main';
+$ajax = isset($_GET['ajax']) || isset($_POST['ajax']) || (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest');
+if ($ajax) {
+    $db->convertToUtf8 = true;
+}
+define('HTML_CHARSET', $ajax ? 'UTF-8' : 'ISO-8859-1');
 CheckOutOfDateSchema($action);
 
-$iconPath = dirname($_SERVER['SCRIPT_NAME']) . '/gfx';
+$iconPath = 'gfx';
 
 if (!isset($collection)) $collection = $DefaultCollection;
 
@@ -46,6 +52,7 @@ if ($collection != 'owned' && isset($Columns[$collection])) {
 
 if ($action == 'GimmeAFrontThumb') {
     if (!isset($mediaid)) $mediaid = '';
+    if (strlen($mediaid) > 0 && strlen($mediaid) < 20) $mediaid = str_pad($mediaid, 20, "\x00");
     if (!isset($bannertype)) $bannertype = '';
     if (!isset($side)) $side = 'f';
     if ($side != 'b') $side = 'f';
@@ -116,6 +123,7 @@ if ($action == 'info') {
 }
 
 if ($action == 'notes') {
+    if (strlen($mediaid) > 0 && strlen($mediaid) < 20) $mediaid = str_pad($mediaid, 20, "\x00");
     $result = $db->sql_query("SELECT notes FROM $DVD_TABLE WHERE id='".$db->sql_escape($mediaid)."'") or die($db->sql_error());
     $data = $db->sql_fetchrow($result);
     $db->sql_freeresult($result);
@@ -127,13 +135,14 @@ if ($action == 'notes') {
 
 if ($action == 'image') {
     DiscourageAbuse($RefuseBots);
+    if (strlen($mediaid) > 0 && strlen($mediaid) < 20) $mediaid = str_pad($mediaid, 20, "\x00");
     $TheTitle = $lang['DVDCOVER'];
     $res = $db->sql_query("SELECT title, originaltitle, description, custommediatype FROM $DVD_TABLE WHERE id='".$db->sql_escape($mediaid)."'") or die($db->sql_error());
     $dat = $db->sql_fetchrow($res);
     $db->sql_freeresult($res);
-    if ($dat['title'] != '') {
+    if ($dat && $dat['title'] != '') {
         FormatTheTitle($dat);
-        $TheTitle = fix1252(htmlspecialchars($dat['title'], ENT_COMPAT, 'ISO-8859-1'));
+        $TheTitle = fix1252(htmlspecialchars($dat['title'], ENT_COMPAT, HTML_CHARSET));
     }
 
     if (!isset($mtype))
@@ -184,9 +193,57 @@ EOT;
 }
 
 if ($action == 'upload' || $action == 'uploadxml') {
-    if (is_readable('upload.php')) {
+    if (is_readable(BASE_PATH . 'upload.php')) {
         include_once('upload.php');
     }
+}
+
+// Upload max size for display
+$GLOBALS['_upload_max'] = ini_get('upload_max_filesize');
+
+// Handle XML collection upload
+if ($action == 'upload_collection' && $_SERVER['REQUEST_METHOD'] == 'POST') {
+    $upload_msg = '';
+    $upload_ok = false;
+
+    if (isset($_POST['delete_import']) && $_POST['delete_import']) {
+        // Delete an uploaded file from import/
+        $delFile = BASE_PATH . 'import/' . basename($_POST['delete_import']);
+        if (is_file($delFile) && pathinfo($delFile, PATHINFO_EXTENSION) === 'xml') {
+            @unlink($delFile);
+            $upload_msg = $lang['UPLOAD']['XMLDELETED'];
+            $upload_ok = true;
+        }
+    } else {
+        // Upload requires authentication
+        $badlogin = !isset($_POST['auth_login']) ||
+            ($_POST['auth_login'] != $update_login) || ($_POST['auth_pass'] != $update_pass);
+        if ($badlogin) {
+            $upload_msg = $lang['BADLOGIN'];
+        } elseif (!isset($_FILES['xmlfile']) || $_FILES['xmlfile']['error'] == UPLOAD_ERR_NO_FILE) {
+            $upload_msg = $lang['UPLOAD']['XMLNOFILE'];
+        } elseif ($_FILES['xmlfile']['error'] !== UPLOAD_ERR_OK) {
+            $errors = [1=>$lang['UPLOAD']['XMLTOOLARGE_SRV'],2=>$lang['UPLOAD']['XMLTOOLARGE_FRM'],3=>$lang['UPLOAD']['XMLPARTIAL'],6=>$lang['UPLOAD']['XMLNOTMPDIR'],7=>$lang['UPLOAD']['XMLWRITEFAIL']];
+            $upload_msg = $errors[$_FILES['xmlfile']['error']] ?? 'Upload error '.$_FILES['xmlfile']['error'];
+        } else {
+            $ext = strtolower(pathinfo($_FILES['xmlfile']['name'], PATHINFO_EXTENSION));
+            if ($ext !== 'xml') {
+                $upload_msg = $lang['UPLOAD']['XMLONLYXML'];
+            } else {
+                $importDir = BASE_PATH . 'import';
+                if (!is_dir($importDir)) @mkdir($importDir, 0775, true);
+                $targetFile = $importDir . '/' . basename($_FILES['xmlfile']['name']);
+                if (move_uploaded_file($_FILES['xmlfile']['tmp_name'], $targetFile)) {
+                    $upload_ok = true;
+                    $upload_msg = sprintf($lang['UPLOAD']['XMLUPLOADED'], basename($targetFile), number_format(filesize($targetFile)/1024, 0));
+                } else {
+                    $upload_msg = $lang['UPLOAD']['XMLFAILED'];
+                }
+            }
+        }
+    }
+    header('Location: index.php?action=update&upload_msg=' . urlencode($upload_msg) . '&upload_ok=' . ($upload_ok?1:0));
+    exit;
 }
 
 if ($action == 'smallupdate') {
@@ -246,53 +303,105 @@ if ($action == 'update' || $action == 'CompleteUpdate' || $action == 'UpdateStat
                     $OnloadStyle = 'UpdateLoaded();';
                     $JavascriptOnerr = '<script type="text/javascript" src="JavascriptOnerr.js"></script>'."\n";
                     $Javascript = '<script type="text/javascript" src="SmartUpdater.js.php"></script>'."\n";
-                    $SubmitButton = '<input type="button" id="SubmitLogin" name="SubmitLogin" value="' . $lang['UPDATE'] . '" onClick="SubmitClicked()">';
+                    $SubmitButton = '<input type="button" class="btn btn-primary" id="SubmitLogin" name="SubmitLogin" value="' . $lang['UPDATE'] . '" onClick="SubmitClicked()">';
                     if ($UpdateDebug)
-                        $SubmitButton = '<input type="button" value="Force Halt" onClick="ForceHalt();"><input type="button" id="DebugButton" name="DebugButton" value="Debug" onClick="DebugEntry();">'.$SubmitButton;
+                        $SubmitButton = '<input type="button" class="btn btn-danger btn-sm me-1" value="Force Halt" onClick="ForceHalt();"><input type="button" class="btn btn-warning btn-sm me-1" id="DebugButton" name="DebugButton" value="Debug" onClick="DebugEntry();">'.$SubmitButton;
                     $Action = 'phpaction';
-                    $OutputAreas = '<div id="statushere"></div>'."\n"
+                    $OutputAreas = '<div id="statushere" class="my-2 text-center"></div>'."\n"
                         .'<div style="display:none"><iframe id="writehere" src="#"></iframe></div>'."\n"
-                        .'<div id="outputhere" style="border:1px solid black; overflow:auto; width:99%; height:75%"></div>'."\n";
+                        .'<div id="outputhere" class="mt-3" style="border:1px solid #3a3f44; border-radius:4px; overflow:auto; width:100%; height:50vh; background:#1a1d21; color:#dee2e6; padding:8px; font-size:0.85rem;"></div>'."\n";
                     if ($SubmitOldStyle) {
                         $OnloadStyle = 'document.LoginForm.auth_login.focus();';
                         $JavascriptOnerr = '';
                         $Javascript = '';
-                        $SubmitButton = '<input type="submit" id="SubmitLogin" name="SubmitLogin" value="' . $lang['UPDATE'] . '">';
+                        $SubmitButton = '<input type="submit" class="btn btn-primary" id="SubmitLogin" name="SubmitLogin" value="' . $lang['UPDATE'] . '">';
                         $Action = 'action';
                         $OutputAreas = '';
                     }
-                    @header('Content-Type: text/html; charset="windows-1252";');
-                    echo <<<EOT
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
-<html>
-<head>
-<META HTTP-EQUIV="Content-Type" CONTENT="text/html; CHARSET=windows-1252">
-<title>$lang[IMPORTTITLE]</title>
-<link rel="stylesheet" type="text/css" href="format.css.php">
-<link rel="SHORTCUT ICON" href="$iconPath/favicon.ico">
-<link rel="icon" type="image/png" href="$iconPath/favicon-192x192.png" sizes="192x192">
-<link rel="apple-touch-icon" sizes="180x180" href="$iconPath/apple-touch-icon-180x180.png">
-$JavascriptOnerr$Javascript</head>
-<body class=f6 onLoad="$OnloadStyle">
-<form class=f1 name="LoginForm" id="LoginForm" action="$PHP_SELF" method="POST">
-<input type=hidden name="$Action" value="$action">
-$lang[LOGIN]<input type=text id=auth_login name=auth_login size=10>
-$lang[PASSWORD]<input type=password id=auth_pass name=auth_pass size=10>
-$lang[COMPLETE]<input type=checkbox id=complete name=complete><br>
-<smallest>$lang[REMOVE]<input type=checkbox $allowremove $showcheck id=remove_missing_fromui name=remove_missing_fromui></smallest><br>
-<input style="display:none" type="checkbox" id="db_fast_update_fromui" name="db_fast_update_fromui" $showdb>
-$SubmitButton
+                    // Build import file status
+                    $importDir = BASE_PATH . 'import';
+                    $importFiles = (is_dir($importDir)) ? glob("$importDir/*.xml") : [];
+                    $importStatus = '';
+                    if (!empty($importFiles)) {
+                        foreach ($importFiles as $ifile) {
+                            $fname = basename($ifile);
+                            $fsize = number_format(filesize($ifile) / 1024, 0);
+                            $ftime = date('d.m.Y H:i', filemtime($ifile));
+                            $importStatus .= '<div class="d-flex align-items-center justify-content-between mb-1">'
+                                . '<span class="text-success">&#10004; ' . htmlspecialchars($fname) . " ({$fsize} KB, {$ftime})</span>"
+                                . '<form method="POST" action="' . $PHP_SELF . '" style="display:inline" onsubmit="return confirm(\'' . addslashes($lang['UPLOAD']['XMLDELCONFIRM']) . '\')">'
+                                . '<input type="hidden" name="action" value="upload_collection">'
+                                . '<input type="hidden" name="delete_import" value="' . htmlspecialchars($fname) . '">'
+                                . '<button type="submit" class="btn btn-outline-danger btn-sm py-0 px-1" title="Delete">&#10005;</button>'
+                                . '</form></div>';
+                        }
+                    }
+                    $uploadMsg = '';
+                    if (isset($_GET['upload_msg']) && $_GET['upload_msg'] !== '') {
+                        $cls = (isset($_GET['upload_ok']) && $_GET['upload_ok']) ? 'success' : 'danger';
+                        $uploadMsg = '<div class="alert alert-' . $cls . ' py-1 px-2 mb-2 small">' . htmlspecialchars($_GET['upload_msg']) . '</div>';
+                    }
+
+                    // Store update form to render inside main shell
+                    $update_head_scripts = $JavascriptOnerr . $Javascript;
+                    $update_onload = $OnloadStyle;
+                    $update_content = <<<UPDATEFORM
+<div class="py-3" style="max-width:600px; margin:0 auto;">
+<h4 class="text-center mb-4">$lang[IMPORTTITLE]</h4>
+
+<div class="card bg-dark border-secondary mb-3">
+<div class="card-body pb-2">
+<h6 class="card-title mb-2">{$lang['UPLOAD']['XMLTITLE']}</h6>
+$uploadMsg
+$importStatus
+<form method="POST" action="$PHP_SELF" enctype="multipart/form-data" class="mt-2">
+<input type="hidden" name="action" value="upload_collection">
+<div class="row g-2 mb-2">
+  <div class="col-6"><input type="text" name="auth_login" class="form-control form-control-sm" placeholder="$lang[LOGIN]" autocomplete="username"></div>
+  <div class="col-6"><input type="password" name="auth_pass" class="form-control form-control-sm" placeholder="$lang[PASSWORD]" autocomplete="current-password"></div>
+</div>
+<div class="input-group input-group-sm">
+  <input type="file" name="xmlfile" accept=".xml" class="form-control form-control-sm">
+  <button type="submit" class="btn btn-outline-info btn-sm">{$lang['UPLOAD']['XMLUPLOAD']}</button>
+</div>
+<small class="text-muted">Max: {$GLOBALS['_upload_max']} &mdash; {$lang['UPLOAD']['XMLHINT']}</small>
 </form>
-$OutputAreas$endbody
-EOT;
+</div>
+</div>
+
+<form name="LoginForm" id="LoginForm" action="$PHP_SELF" method="POST" class="card card-body bg-dark border-secondary">
+<input type=hidden name="$Action" value="$action">
+<div class="mb-3">
+  <label for="auth_login" class="form-label">$lang[LOGIN]</label>
+  <input type="text" id="auth_login" name="auth_login" class="form-control form-control-sm" autocomplete="username">
+</div>
+<div class="mb-3">
+  <label for="auth_pass" class="form-label">$lang[PASSWORD]</label>
+  <input type="password" id="auth_pass" name="auth_pass" class="form-control form-control-sm" autocomplete="current-password">
+</div>
+<div class="form-check mb-2">
+  <input type="checkbox" id="complete" name="complete" class="form-check-input">
+  <label for="complete" class="form-check-label">$lang[COMPLETE]</label>
+</div>
+<div class="form-check mb-3">
+  <input type="checkbox" $allowremove $showcheck id="remove_missing_fromui" name="remove_missing_fromui" class="form-check-input">
+  <label for="remove_missing_fromui" class="form-check-label"><small>$lang[REMOVE]</small></label>
+</div>
+<input style="display:none" type="checkbox" id="db_fast_update_fromui" name="db_fast_update_fromui" $showdb>
+<div class="d-grid">$SubmitButton</div>
+</form>
+</div>
+$OutputAreas
+UPDATEFORM;
+                    $action = 'main'; // Let it flow to main shell
                 }
                 else {
                     header("HTTP/1.0 401 Bad Username/Password", true, 401);
                     $str = '<div id="phpdvd_notice" style="display:none">401</div>';
-                    $str .= 'Bad Username/Password.';
+                    $str .= $lang['BADLOGIN'];
                     echo "$str$eoln";
+                    exit;
                 }
-                exit;
             }
             else {
                 $authorized = true;
@@ -308,8 +417,20 @@ EOT;
         else
             $db_fast_update = false;
     }
+    // If action was changed to 'main' (update form stored for main shell), skip processing
+    if ($action == 'main') goto update_form_skip;
+
     if ($LeaveMissing)
         $remove_missing = false;
+
+    // Use import/ directory if it has XML files
+    $importDir = BASE_PATH . 'import';
+    if (is_dir($importDir)) {
+        $importXmlFiles = glob("$importDir/*.xml");
+        if (!empty($importXmlFiles)) {
+            $xmldir = $importDir;
+        }
+    }
 
     include_once('incupdate.php');
     HandleOutOfDateSchema($outputtext);
@@ -320,6 +441,7 @@ EOT;
     DebugSQL($db, "$action");
     exit;
 }
+update_form_skip:
 
 function CleanTheHTMLIn(&$str) {
 global $playsounds;
@@ -504,7 +626,13 @@ global $lang, $reviewsort;
         break;
     }
     if ($colvalue == '0') $colvalue = '';
-    if ($colname != 'none') $colvalue = "<td style=\"padding-left:10px\" align=$align nowrap>$colvalue</td>";
+    if ($colname != 'none') {
+        global $ajax;
+        if ($ajax)
+            $colvalue = "<span class=\"col2\" style=\"text-align:$align\">$colvalue</span>";
+        else
+            $colvalue = "<td style=\"padding-left:10px\" align=$align nowrap>$colvalue</td>";
+    }
     return($colvalue);
 }
 
@@ -685,7 +813,7 @@ global $Highlight, $loanlength;
 if (!isset($searchtext)) $searchtext = '';
 $searchtext = rawurldecode($searchtext);
 $searchurl = rawurlencode($searchtext);
-$searchdisp = htmlentities($searchtext, ENT_COMPAT, 'ISO-8859-1');
+$searchdisp = htmlentities($searchtext, ENT_COMPAT, HTML_CHARSET);
 
 if ($action == 'nav') {
     if (!isset($searchby)) $searchby = '';
@@ -1234,7 +1362,7 @@ case 'wishlist':
         $where .= " AND auxcolltype=''";
     break;
 case 'loaned':
-    $where = "loaninfo!=''";
+    $where = "(loaninfo!='' OR (boxparent!='' AND boxparent IN (SELECT id FROM $DVD_TABLE lp WHERE lp.loaninfo!='')))";
     break;
 case 'all':
     $where = "1";
@@ -1265,8 +1393,8 @@ if ($stickyboxsets && $searchby == '')
     $where .= " AND boxparent='%%BOXPARENT%%'";
 
 $Extra = 'dvd WHERE';
-if (isset($letter) && $lettermeaning == 1) {
-    if ($letter == "0")
+if (isset($letter) && ($lettermeaning == 1 || $ajax)) {
+    if ($letter == "0" || $letter == "0-9")
         $where .= " AND dvd.sorttitle < 'A'";
     else
         $where .= " AND dvd.sorttitle LIKE '$letter%'";
@@ -1448,37 +1576,246 @@ if ($action == 'main') {
         }
     }
 
-    if ($allowwidths) {
-        if (isset($_COOKIE['widthgt800'])) $widthgt800 = $_COOKIE['widthgt800'];
+    // Build collection options for navbar
+    $noadult = '';
+    if (!DisplayIfIsPrivateOrAlways($handleadult))
+        $noadult .= ' AND isadulttitle=0';
+    $numincollection_nav = array('owned'=>0,'ordered'=>0,'wishlist'=>0,'loaned'=>0,'all'=>0);
+    $result = $db->sql_query("SELECT collectiontype, SUM(countas) AS itemcount FROM $DVD_TABLE WHERE 1 $noadult GROUP BY collectiontype") or die($db->sql_error());
+    while ($items = $db->sql_fetchrow($result)) {
+        $numincollection_nav[$items['collectiontype']] = $items['itemcount'];
+        $numincollection_nav['all'] += $items['itemcount'];
     }
-    $nomove = ($allowwidths) ? '': 'framespacing=0';
+    if (DisplayIfIsPrivateOrAlways($displayloaned)) {
+        $db->sql_freeresult($result);
+        $result = $db->sql_query("SELECT SUM(countas) AS itemcount FROM $DVD_TABLE WHERE loaninfo != '' $noadult") or die($db->sql_error());
+        $items = $db->sql_fetchrow($result);
+        if ($items['itemcount'] != 0)
+            $numincollection_nav['loaned'] = $items['itemcount'];
+    }
+    $db->sql_freeresult($result);
 
-    header('Content-Type: text/html; charset="windows-1252";');
+    // Build collection <option> tags
+    $sel_owned_m = $sel_ordered_m = $sel_wishlist_m = $sel_loaned_m = $sel_all_m = '';
+    switch ($collection) {
+        case 'ordered': $sel_ordered_m = ' selected'; break;
+        case 'wishlist': $sel_wishlist_m = ' selected'; break;
+        case 'loaned': $sel_loaned_m = ' selected'; break;
+        case 'all': $sel_all_m = ' selected'; break;
+        default: $sel_owned_m = ' selected'; break;
+    }
+    $collectionOptions = "<option value=\"all\"$sel_all_m>$lang[ALL]</option>";
+    if (!$hideowned && $numincollection_nav['owned'] != 0)
+        $collectionOptions .= "<option value=\"owned\"$sel_owned_m>$lang[OWNED]</option>";
+    if (!$hideordered && $numincollection_nav['ordered'] != 0)
+        $collectionOptions .= "<option value=\"ordered\"$sel_ordered_m>$lang[ORDERED]</option>";
+    if (!$hidewishlist && $numincollection_nav['wishlist'] != 0)
+        $collectionOptions .= "<option value=\"wishlist\"$sel_wishlist_m>$lang[WISHLIST]</option>";
+    if (!$hideloaned && $numincollection_nav['loaned'] != 0)
+        if (DisplayIfIsPrivateOrAlways($displayloaned))
+            $collectionOptions .= "<option value=\"loaned\"$sel_loaned_m>$lang[LOANED]</option>";
+
+    $coltnum_m = (substr($collection, 0, strlen('FJW-'))=='FJW-')?(int)substr($collection, strlen('FJW-')): -1;
+    foreach ($collectiontypelist as $num => $ctype) {
+        $thissel = ($coltnum_m==$num)? ' selected': '';
+        $collectionOptions .= "<option value=\"FJW-$num\"$thissel>$ctype</option>";
+    }
+    foreach ($masterauxcolltype as $num => $auxcoltype) {
+        if ($auxcoltype != '') {
+            $thissel = (is_numeric($collection) && $collection==$num)? ' selected': '';
+            $collectionOptions .= "<option value=\"$num\"$thissel>$auxcoltype</option>";
+        }
+    }
+
+    // Build A-Z letter links
+    $letterLinks = '';
+    $letters = array('0-9','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z');
+    foreach ($letters as $lt) {
+        $letterLinks .= "<a href=\"#\" data-letter=\"$lt\">$lt</a> ";
+    }
+
+    // Build language menu items
+    $langMenuItems = '';
+    if ($allowlocale) {
+        $langMenuItems .= "<li><a class=\"dropdown-item\" href=\"#\" onclick=\"changeLanguage('en');return false;\"><span class=\"fi fi-gb me-2\"></span>English</a></li>";
+        $langMenuItems .= "<li><a class=\"dropdown-item\" href=\"#\" onclick=\"changeLanguage('fr');return false;\"><span class=\"fi fi-fr me-2\"></span>Fran&ccedil;ais</a></li>";
+        $langMenuItems .= "<li><a class=\"dropdown-item\" href=\"#\" onclick=\"changeLanguage('de');return false;\"><span class=\"fi fi-de me-2\"></span>Deutsch</a></li>";
+        $langMenuItems .= "<li><a class=\"dropdown-item\" href=\"#\" onclick=\"changeLanguage('no');return false;\"><span class=\"fi fi-no me-2\"></span>Norsk</a></li>";
+        $langMenuItems .= "<li><a class=\"dropdown-item\" href=\"#\" onclick=\"changeLanguage('sv');return false;\"><span class=\"fi fi-se me-2\"></span>Svenska</a></li>";
+        $langMenuItems .= "<li><a class=\"dropdown-item\" href=\"#\" onclick=\"changeLanguage('dk');return false;\"><span class=\"fi fi-dk me-2\"></span>Dansk</a></li>";
+        $langMenuItems .= "<li><a class=\"dropdown-item\" href=\"#\" onclick=\"changeLanguage('fi');return false;\"><span class=\"fi fi-fi me-2\"></span>Suomi</a></li>";
+        $langMenuItems .= "<li><a class=\"dropdown-item\" href=\"#\" onclick=\"changeLanguage('nl');return false;\"><span class=\"fi fi-nl me-2\"></span>Nederlands</a></li>";
+        $langMenuItems .= "<li><a class=\"dropdown-item\" href=\"#\" onclick=\"changeLanguage('ru');return false;\"><span class=\"fi fi-ru me-2\"></span>&#x420;&#x443;&#x441;&#x441;&#x43a;&#x438;&#x439;</a></li>";
+        $langMenuItems .= "<li><a class=\"dropdown-item\" href=\"#\" onclick=\"changeLanguage('cs');return false;\"><span class=\"fi fi-cz me-2\"></span>&#x10C;e&#x161;tina</a></li>";
+    }
+
+    // Build tools menu items
+    $toolsMenuItems = "<li><a class=\"dropdown-item\" href=\"#\" onclick=\"loadStatistics();return false;\">$lang[STATISTICS]</a></li>";
+    if (is_readable(BASE_PATH . 'pages/ws.php') && DisplayIfIsPrivateOrAlways($handlewatched))
+        $toolsMenuItems .= "<li><a class=\"dropdown-item\" href=\"#\" onclick=\"loadWatched();return false;\">$lang[WATCHED]</a></li>";
+    if (is_readable(BASE_PATH . 'pages/gallery.php')) {
+        $toolsMenuItems .= "<li><a class=\"dropdown-item\" href=\"#\" onclick=\"loadGallery();return false;\">$lang[FRONTGALLERY]</a></li>";
+        if ($BackGallery)
+            $toolsMenuItems .= "<li><a class=\"dropdown-item\" href=\"#\" onclick=\"loadBackGallery();return false;\">$lang[BACKGALLERY]</a></li>";
+    }
+    if ($AllowChooser)
+        $toolsMenuItems .= "<li><a class=\"dropdown-item\" href=\"#\" onclick=\"loadChooser();return false;\">$lang[CHOOSERSHORT]</a></li>";
+    if (is_readable(BASE_PATH . 'includes/fetch_covers.php'))
+        $toolsMenuItems .= "<li><hr class=\"dropdown-divider\"></li><li><a class=\"dropdown-item\" href=\"#\" onclick=\"loadDvdContent('CoverFetcher');return false;\">TMDB Cover Fetcher</a></li>";
+    $toolsMenuItems .= "<li><hr class=\"dropdown-divider\"></li>";
+    $toolsMenuItems .= "<li><a class=\"dropdown-item\" href=\"#\" onclick=\"loadDvdContent('UserPrefs');return false;\">{$lang['PREFS']['USERPREFS']}</a></li>";
+    if ($allowupdate)
+        $toolsMenuItems .= "<li><a class=\"dropdown-item\" href=\"$PHP_SELF?action=update\">$lang[UPDATE]</a></li>";
+
+    // DVD count info
+    $infoline_nav = "$numincollection_nav[all] $lang[TOTAL]";
+
+    header('Content-Type: text/html; charset=UTF-8;');
+    $jsCacheBust = time();
     $rssfeed = '';
-    if (is_readable('rss.php')) $rssfeed = ' <link rel="alternate" type="application/rss+xml" title="'.$CurrentSiteTitle.'" href="rss.php" />';
-    if ($mobileshow) {
-        if ($lastmedia == 'Chooser' || $lastmedia == 'Statistics' || $lastmedia == 'WatchedStatistics' || substr($lastmedia, 0, 7) == 'Gallery')
-            $mobilepage = $PHP_SELF;
+    if (is_readable(BASE_PATH . 'pages/rss.php')) $rssfeed = '<link rel="alternate" type="application/rss+xml" title="'.$CurrentSiteTitle.'" href="rss.php" />';
+
+    echo <<<EOT
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>$CurrentSiteTitle</title>
+$rssfeed
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/gh/lipis/flag-icons@7.2.3/css/flag-icons.min.css" rel="stylesheet">
+<link rel="stylesheet" type="text/css" href="format.css.php">
+<link rel="stylesheet" type="text/css" href="custom.css">
+<link rel="SHORTCUT ICON" href="$iconPath/favicon.ico">
+<link rel="icon" type="image/png" href="$iconPath/favicon-192x192.png" sizes="192x192">
+<link rel="apple-touch-icon" sizes="180x180" href="$iconPath/apple-touch-icon-180x180.png">
+EOT;
+    if (!empty($update_head_scripts)) echo $update_head_scripts;
+    if (!empty($update_content)) $lastmedia = ''; // Don't auto-load DVD content over update form
+    $bodyOnload = !empty($update_onload) ? " onLoad=\"$update_onload\"" : '';
+    echo <<<EOT
+</head>
+<body data-base-url="$PHP_SELF"
+      data-collection="$collection"
+      data-sort="$sort"
+      data-order="$order"
+      data-searchby="$searchby"
+      data-searchtext="$searchurl"
+      data-mediaid="$lastmedia"$bodyOnload>
+
+<!-- Navbar -->
+<nav class="navbar navbar-expand-lg navbar-dark" style="background-color: var(--phpdvd-header-bg, #0000A0);">
+  <div class="container-fluid">
+    <button class="btn btn-outline-light d-md-none me-2" id="sidebar-toggle-btn" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarOffcanvas">
+      <i class="bi bi-list"></i>
+    </button>
+    <a class="navbar-brand" href="$PHP_SELF" style="font-size:0.95rem;">$CurrentSiteTitle</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarContent">
+      <!-- Search form -->
+      <form class="d-flex me-auto" id="search-form" role="search">
+        <select name="searchby" class="form-select form-select-sm me-1" style="width:auto;">
+          <option value="title">$lang[TITLES]</option>
+          <option value="director">$lang[DIRECTORS]</option>
+          <option value="actor">$lang[ACTORS]</option>
+          <option value="credits">$lang[CREDITS]</option>
+        </select>
+        <input type="text" id="search-textbox" class="form-control form-control-sm me-1" placeholder="$lang[SEARCH]..." style="width:160px;">
+        <button class="btn btn-sm btn-light me-1" type="submit"><i class="bi bi-search"></i></button>
+        <button class="btn btn-sm btn-outline-light" type="button" id="search-clear">$lang[CLEAR]</button>
+      </form>
+      <!-- Collection dropdown -->
+      <select id="collection-select" class="form-select form-select-sm me-2" style="width:auto;">
+        $collectionOptions
+      </select>
+      <!-- Tools dropdown -->
+      <div class="dropdown me-2">
+        <button class="btn btn-sm btn-outline-light dropdown-toggle" type="button" data-bs-toggle="dropdown">
+          <i class="bi bi-gear"></i> $lang[MENU]
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end">
+          $toolsMenuItems
+        </ul>
+      </div>
+EOT;
+    if ($allowlocale) echo <<<EOT
+      <!-- Language dropdown -->
+      <div class="dropdown">
+        <button class="btn btn-sm btn-outline-light dropdown-toggle" type="button" data-bs-toggle="dropdown">
+          <i class="bi bi-globe"></i>
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end">
+          $langMenuItems
+        </ul>
+      </div>
+EOT;
+    echo <<<EOT
+    </div>
+  </div>
+</nav>
+
+<!-- A-Z Letter navigation -->
+<div id="letter-nav">
+$letterLinks
+</div>
+
+<!-- Info line -->
+<div id="info-line">$infoline_nav</div>
+
+<!-- Main layout: sidebar + content -->
+<div class="container-fluid p-0">
+  <div class="row g-0">
+    <!-- Sidebar (DVD list) - hidden on mobile, shown via offcanvas -->
+    <div class="col-md-3 d-none d-md-block" id="dvd-sidebar">
+      <div id="sidebar-content">
+        <div class="loading-spinner">$lang[LOADING]</div>
+      </div>
+    </div>
+    <!-- Main content area -->
+    <div class="col-md-9 col-12" id="main-content">
+EOT;
+    if (!empty($update_content)) {
+        echo $update_content;
+    } else {
+        echo "      <div class=\"loading-spinner\">$lang[LOADING]</div>\n";
     }
     echo <<<EOT
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Frameset//EN">
-<html>
-<head>
-<META HTTP-EQUIV="Content-Type" CONTENT="text/html; CHARSET=windows-1252">
-  <title>$CurrentSiteTitle</title>
-  $rssfeed
-  <script type="text/javascript" src="top.js"></script>
-  <link rel="SHORTCUT ICON" href="$iconPath/favicon.ico">
-  <link rel="icon" type="image/png" href="$iconPath/favicon-192x192.png" sizes="192x192">
-  <link rel="apple-touch-icon" sizes="180x180" href="$iconPath/apple-touch-icon-180x180.png">
-</head>
-<frameset id="thecols" cols="$widthgt800,*" $nomove>
-  <frameset id="therows" rows="*,1" border=0 frameborder=0 framespacing=0>
-    <frame src="$PHP_SELF?sort=$sort&amp;order=$order&amp;collection=$collection&amp;searchby=$searchby&amp;searchtext=$searchurl&amp;action=nav" name="nav" scrolling=no framespacing=0 marginheight=2 marginwidth=2>
-    <frame src="$PHP_SELF?sort=$sort&amp;order=$order&amp;collection=$collection&amp;searchby=$searchby&amp;searchtext=$searchurl&amp;action=menu" name="menu" scrolling=yes framespacing=0 marginheight=0 marginwidth=0>
-  </frameset>
-  <frame src="$mobilepage?mediaid=$lastmedia&amp;action=show" framespacing=0 marginheight=0 marginwidth=0 name="entry">
-</frameset>
+    </div>
+  </div>
+</div>
+
+<!-- Mobile offcanvas sidebar -->
+<div class="offcanvas offcanvas-start d-md-none" tabindex="-1" id="sidebarOffcanvas">
+  <div class="offcanvas-header">
+    <h5 class="offcanvas-title">$lang[TITLES]</h5>
+    <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
+  </div>
+  <div class="offcanvas-body p-0" id="sidebar-content-mobile">
+  </div>
+</div>
+
+<!-- Image preview modal -->
+<div class="modal fade" id="imageModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered modal-xl">
+    <div class="modal-content bg-black border-0">
+      <div class="modal-header border-0 p-2">
+        <h6 class="modal-title text-white" id="imageModalTitle"></h6>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body text-center p-0">
+        <img id="imageModalImg" src="" alt="" style="max-width:100%; max-height:85vh; object-fit:contain;">
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script type="text/javascript" src="main.js?v=$jsCacheBust"></script>
+</body>
 </html>
 
 EOT;
@@ -1576,6 +1913,20 @@ if ($action == 'menu') {
     }
 
 
+    $numcols = 1;   // 1 for image, one for title
+    $page = 1;
+    if ($TitlesPerPage != 0)
+        $page = ceil($startrow / $TitlesPerPage)+1;
+    if (($lettermeaning == 1 || $TitlesPerPage != 0) && isset ($letter)) {
+        if ($letter != '0-9')
+            $let = "&amp;letter=$letter#$letter";
+        else
+            $let = "&amp;letter=$letter#0-9";
+    }
+    else
+        $let = '';
+
+    if (!$ajax) {
     header('Content-Type: text/html; charset="windows-1252";');
     echo <<<EOT
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
@@ -1609,18 +1960,6 @@ var item=document.getElementById(theitems);
 }
 
 EOT;
-    $numcols = 1;   // 1 for image, one for title
-    $page = 1;
-    if ($TitlesPerPage != 0)
-        $page = ceil($startrow / $TitlesPerPage)+1;
-    if (($lettermeaning == 1 || $TitlesPerPage != 0) && isset ($letter)) {
-        if ($letter != '0-9')
-            $let = "&amp;letter=$letter#$letter";
-        else
-            $let = "&amp;letter=$letter#0-9";
-    }
-    else
-        $let = '';
     echo <<<EOT
   //-->
   </script>
@@ -1652,12 +1991,12 @@ EOT;
     momItems[num++]=["$lang[STATISTICS]", "$PHP_SELF?mediaid=Statistics&amp;action=show", "entry"]
 
 EOT;
-    if (is_readable("ws.php") && DisplayIfIsPrivateOrAlways($handlewatched)) echo <<<EOT
+    if (is_readable(BASE_PATH . 'pages/ws.php') && DisplayIfIsPrivateOrAlways($handlewatched)) echo <<<EOT
     momItems[num++]=["$lang[WATCHED]", "ws.php?ct=$collection&amp;page=$page&amp;searchby=$searchby&amp;searchtext=$searchurl", "entry"]
 
 EOT;
 
-    if (is_readable('gallery.php')) {           // changed: Thomas 29.08.2005
+    if (is_readable(BASE_PATH . 'pages/gallery.php')) {
         echo <<<EOT
     momItems[num++]=["$lang[FRONTGALLERY]", "$PHP_SELF?mediaid=Gallery&amp;action=show&amp;ct=$collection&amp;page=$page&amp;searchby=$searchby&amp;searchtext=$searchurl&amp;sort=$sort&amp;order=$order$let", "entry"]
 
@@ -1695,7 +2034,7 @@ EOT;
 
 EOT;
 
-    if (is_readable('upload.php') || $allowupdate || (is_readable('imagedata.php') && $forumuser && $collectionurl)) echo<<<EOT
+    if (is_readable(BASE_PATH . 'upload.php') || $allowupdate || (is_readable(BASE_PATH . 'includes/imagedata.php') && $forumuser && $collectionurl)) echo<<<EOT
     momItems[num++]=["$lang[ADMIN]"]
 
 EOT;
@@ -1704,12 +2043,7 @@ EOT;
         $ii_ignorelocked = false;
     if (!isset($locale))
         $locale = "en";
-//  if (is_readable('imagedata.php') && $forumuser && $collectionurl) echo <<<EOT
-//  momItems[num++]=["$lang[IMAGE]", "http://dvdaholic.me.uk/ii/index.php?user=$forumuser&locked=$ii_ignorelocked&lang=$locale", "_new"]
-//  momItems[num++]=["$lang[IMAGEUSERS]", "$ImageUserURL", "entry"]
-//
-//EOT;
-    if (is_readable('upload.php')) {
+    if (is_readable(BASE_PATH . 'upload.php')) {
         echo <<<EOT
     momItems[num++]=["$lang[UPLOADM]", "$PHP_SELF?action=upload", "_top", 1, "no"]
     momItems[num++]=["$lang[UPDATE]", "$PHP_SELF?action=update", "_top", 1]
@@ -1724,62 +2058,111 @@ EOT;
     }
     echo <<<EOT
     momItems[num++]=["$lang[MISCLINKS]"]
-//  momItems[num++]=["$lang[ANDYFORUM]", "http://forums.dvdaholic.me.uk", "_blank"]
-//  momItems[num++]=["DVD Profiler V2.x", "http://www.intervocative.com", "_blank"]
     momItems[num++]=["DVD Profiler V3.x", "http://www.invelos.com", "_blank"]
-//  momItems[num++]=["$lang[FORUMS] V2.x", "http://www.intervocative.com/Forums.aspx?task=viewtopic&topicid=6404", "_blank"]
     momItems[num++]=["$lang[NEWRELEASES]", "https://www.joblo.com/blu-rays-dvds/release-dates/", "_blank"]
 
 EOT;
     if ($AllowChooser) echo "\tmomItems[num++]=[\"$lang[CHOOSERSHORT]\", \"Chooser.php\", \"entry\"]\n";
     echo <<<EOT
-//  momItems[num++]=["Get Firefox!", "http://www.getfirefox.com", "_blank"]
     MOMbilden();
 
     //-->
     </script>
+
+EOT;
+    } // end if (!$ajax) - legacy frame mode
+
+    if ($ajax) {
+        // Compute sort header variables for AJAX sidebar
+        SetColumnTitles($secondcol, $secondcoltitle, $secondcolhover);
+        SetColumnTitles($thirdcol, $thirdcoltitle, $thirdcolhover);
+        $sortimg_title = ($sort=='sorttitle') ? "&#9650; " . $lang['TITLE'] : $lang['TITLE'];
+        $sortimg_year = ($sort==$secondcol) ? "&#9650; $secondcoltitle" : $secondcoltitle;
+        $sortimg_num = ($sort==$thirdcol) ? "&#9650; $thirdcoltitle" : $thirdcoltitle;
+        if ($sort=='sorttitle' && $order=='desc') $sortimg_title = "&#9660; " . $lang['TITLE'];
+        if ($sort==$secondcol && $order=='desc') $sortimg_year = "&#9660; $secondcoltitle";
+        if ($sort==$thirdcol && $order=='desc') $sortimg_num = "&#9660; $thirdcoltitle";
+        $sorthdr_title = ($sort=='sorttitle') ? (($order=='asc')?'desc':'asc') : $defaultorder['sorttitle'];
+        $sorthdr_year = ($sort==$secondcol) ? (($order=='asc')?'desc':'asc') : $defaultorder[$secondcol];
+        $sorthdr_num = ($sort==$thirdcol) ? (($order=='asc')?'desc':'asc') : $defaultorder[$thirdcol];
+
+        echo '<div id="sidebar-sort" class="d-flex border-bottom border-secondary px-2 py-1" style="font-size:0.8rem;">' . "\n";
+        echo "<a href=\"#\" data-sort=\"sorttitle\" data-order=\"$sorthdr_title\" class=\"flex-fill text-decoration-none" . ($sort=='sorttitle'?' fw-bold':'') . "\">$sortimg_title</a>";
+        echo "<a href=\"#\" data-sort=\"$secondcol\" data-order=\"$sorthdr_year\" class=\"text-decoration-none text-end" . ($sort==$secondcol?' fw-bold':'') . "\" style=\"min-width:60px\">$sortimg_year</a>";
+        echo "<a href=\"#\" data-sort=\"$thirdcol\" data-order=\"$sorthdr_num\" class=\"text-decoration-none text-end ms-2" . ($sort==$thirdcol?' fw-bold':'') . "\" style=\"min-width:60px\">$sortimg_num</a>";
+        echo '</div>' . "\n";
+        echo '<div id="sidebar-list">' . "\n";
+    } else {
+        echo <<<EOT
 <table width="100%" cellspacing=1>
 <tr>
 <td><a name=0></a>
 <table id="menutable" width="100%" cellpadding=0 cellspacing=0>
 
 EOT;
+    }
     if ($secondcol != 'none')
         $numcols++;
     if ($thirdcol != 'none')
         $numcols++;
     unset($numincollection);
 function ProcessChildrenOf($boxparent, &$sql, &$numthispage, &$secondcol, &$thirdcol, &$boxchildren, &$plusdisplay, &$plusgif, &$numcols, &$thisclass, $depth) {
-global $db, $PHP_SELF, $mobilepage;
+global $db, $PHP_SELF, $mobilepage, $ajax;
 
     $result = $db->sql_query(str_replace('%%BOXPARENT%%', $boxparent, $sql)) or die($db->sql_error());
     $numthispage += $db->sql_numrows($result);
     while ($dvd = $db->sql_fetchrow($result)) {
-        if ($boxchildren == '')
-            $boxchildren = "<tr id=\"bs" . str_replace('.', '_', $boxparent) . "\" $plusdisplay><td colspan=$numcols><table width=\"100%\" cellpadding=0 cellspacing=0>\n";
         UpdateDataRow($dvd);
         $secnum = ProjectAColumn($secondcol, $dvd, 'center');
         $cnum = ProjectAColumn($thirdcol, $dvd, 'right');
 
-        $stitle = fix1252(htmlspecialchars($dvd['sorttitle'], ENT_COMPAT, 'ISO-8859-1'));
-        $ttitle = FormatIcon($dvd) . DisplayDecoration(fix1252(htmlspecialchars($dvd['title'], ENT_COMPAT, 'ISO-8859-1')), $dvd);
+        $stitle = fix1252(htmlspecialchars($dvd['sorttitle'], ENT_COMPAT, HTML_CHARSET));
+        $ttitle = FormatIcon($dvd) . DisplayDecoration(fix1252(htmlspecialchars($dvd['title'], ENT_COMPAT, HTML_CHARSET)), $dvd);
         $dd = 10 + $depth;
-        if ($dvd['boxchild'] != 0) {
-            $boximg = '<img src="'.$plusgif.'" onclick="dh(\'bs'. str_replace(".", "_", $dvd['id']) .'\',this)" style="vertical-align:middle" alt=""/><span style="width:2px"></span>';
-            $dd -= 15;
-            $boxchildren .= "<tr $thisclass><td style=\"padding-left:{$dd}px\">"
-                ."$boximg<a href=\"$mobilepage?mediaid=$dvd[id]&amp;action=show\" "
-                ."title=\"$stitle\">$ttitle</a></td>"
-                ."$secnum$cnum</tr><tr class=line><td colspan=$numcols></td></tr>\n"
-                ."<tr id=\"bs" . str_replace('.', '_', $dvd['id']) . "\" $plusdisplay><td colspan=$numcols><table width=\"100%\" cellpadding=0 cellspacing=0>\n";
-            ProcessChildrenOf($dvd['id'], $sql, $numthispage, $secondcol, $thirdcol, $boxchildren, $plusdisplay, $plusgif, $numcols, $thisclass, $depth+20);
-            $boxchildren .= "</table></td></tr>";
-        }
-        else {
-            $boxchildren .= "<tr $thisclass><td style=\"padding-left:{$dd}px\">"
-                ."<a href=\"$mobilepage?mediaid=$dvd[id]&amp;action=show\" "
-                ."title=\"$stitle\">$ttitle</a></td>"
-                ."$secnum$cnum</tr><tr class=line><td colspan=$numcols></td></tr>\n";
+
+        $htmlId = $ajax ? rtrim($dvd['id'], "\x00") : $dvd['id'];
+        $linkattr = $ajax
+            ? "href=\"#\" data-mediaid=\"$htmlId\" onclick=\"loadDvdContent('$htmlId');return false;\""
+            : "href=\"$mobilepage?mediaid=$dvd[id]&amp;action=show\"";
+
+        if ($ajax) {
+            // Bootstrap div-based children
+            $bsid = 'bs' . str_replace('.', '_', $htmlId);
+            if ($dvd['boxchild'] != 0) {
+                $boxchildren .= "<div class=\"dvd-row dvd-row-even\" style=\"padding-left:{$dd}px\">"
+                    ."<span class=\"boxset-toggle\" data-target=\"$bsid\">+</span>"
+                    ."<a $linkattr title=\"$stitle\">$ttitle</a>"
+                    ."$secnum$cnum"
+                    ."</div>\n";
+                $boxchildren .= "<div id=\"$bsid\" style=\"display:none\">\n";
+                ProcessChildrenOf($dvd['id'], $sql, $numthispage, $secondcol, $thirdcol, $boxchildren, $plusdisplay, $plusgif, $numcols, $thisclass, $depth+20);
+                $boxchildren .= "</div>\n";
+            } else {
+                $boxchildren .= "<div class=\"dvd-row dvd-row-even\" style=\"padding-left:{$dd}px\">"
+                    ."<a $linkattr title=\"$stitle\">$ttitle</a>"
+                    ."$secnum$cnum"
+                    ."</div>\n";
+            }
+        } else {
+            // Legacy table-based children
+            if ($boxchildren == '')
+                $boxchildren = "<tr id=\"bs" . str_replace('.', '_', $boxparent) . "\" $plusdisplay><td colspan=$numcols><table width=\"100%\" cellpadding=0 cellspacing=0>\n";
+            if ($dvd['boxchild'] != 0) {
+                $boximg = '<img src="'.$plusgif.'" onclick="dh(\'bs'. str_replace(".", "_", $dvd['id']) .'\',this)" style="vertical-align:middle" alt=""/><span style="width:2px"></span>';
+                $dd -= 15;
+                $boxchildren .= "<tr $thisclass><td style=\"padding-left:{$dd}px\">"
+                    ."$boximg<a $linkattr "
+                    ."title=\"$stitle\">$ttitle</a></td>"
+                    ."$secnum$cnum</tr><tr class=line><td colspan=$numcols></td></tr>\n"
+                    ."<tr id=\"bs" . str_replace('.', '_', $dvd['id']) . "\" $plusdisplay><td colspan=$numcols><table width=\"100%\" cellpadding=0 cellspacing=0>\n";
+                ProcessChildrenOf($dvd['id'], $sql, $numthispage, $secondcol, $thirdcol, $boxchildren, $plusdisplay, $plusgif, $numcols, $thisclass, $depth+20);
+                $boxchildren .= "</table></td></tr>";
+            } else {
+                $boxchildren .= "<tr $thisclass><td style=\"padding-left:{$dd}px\">"
+                    ."<a $linkattr "
+                    ."title=\"$stitle\">$ttitle</a></td>"
+                    ."$secnum$cnum</tr><tr class=line><td colspan=$numcols></td></tr>\n";
+            }
         }
     }
     $db->sql_freeresult($result);
@@ -1804,36 +2187,68 @@ global $db, $PHP_SELF, $mobilepage;
 
         GetSeparators($sort, $dvd, $sepa, $separator);
         if (strcmp($sepa, $oldsepa) != 0) {
-            echo "\n<tr class=line><td colspan=$numcols></td></tr>"
-                ."<tr class=a><td style=\"padding-left:12px\" colspan=$numcols>$separator</td></tr>"
-                ."<tr class=line><td colspan=$numcols></td></tr><tr class=line><td colspan=$numcols></td></tr>\n";
+            if ($ajax) {
+                echo "\n<div class=\"dvd-divider\">$separator</div>\n";
+            } else {
+                echo "\n<tr class=line><td colspan=$numcols></td></tr>"
+                    ."<tr class=a><td style=\"padding-left:12px\" colspan=$numcols>$separator</td></tr>"
+                    ."<tr class=line><td colspan=$numcols></td></tr><tr class=line><td colspan=$numcols></td></tr>\n";
+            }
             $evenodd = 0;
         }
 
-        if ($evenodd % 2)
-            $thisclass = 'class=l';
-        else
-            $thisclass = 'class=o';
+        $stitle = fix1252(htmlspecialchars($dvd['sorttitle'], ENT_COMPAT, HTML_CHARSET));
+        $ttitle = FormatIcon($dvd) . DisplayDecoration(fix1252(htmlspecialchars($dvd['title'], ENT_COMPAT, HTML_CHARSET)), $dvd);
 
-        $stitle = fix1252(htmlspecialchars($dvd['sorttitle'], ENT_COMPAT, 'ISO-8859-1'));
-        $ttitle = FormatIcon($dvd) . DisplayDecoration(fix1252(htmlspecialchars($dvd['title'], ENT_COMPAT, 'ISO-8859-1')), $dvd);
+        $htmlId = $ajax ? rtrim($dvd['id'], "\x00") : $dvd['id'];
+        $linkattr = $ajax
+            ? "href=\"#\" data-mediaid=\"$htmlId\" onclick=\"loadDvdContent('$htmlId');return false;\""
+            : "href=\"$mobilepage?mediaid=$dvd[id]&amp;action=show\"";
 
-        $boximg = '<img src="'.$plusgif.'" onclick="dh(\'bs'. str_replace(".", "_", $dvd['id']) .'\',this)" style="vertical-align:middle" alt=""/><span style="width:2px"></span>';
-        echo "<tr $thisclass><td style=\"padding-left:10px\">";
-        $theboxparent = "<a href=\"$mobilepage?mediaid=$dvd[id]&amp;action=show\" "
-                ."title=\"$stitle\">$ttitle</a></td>$secnum"
-                ."$cnum</tr><tr class=line><td colspan=$numcols></td></tr>\n";
-        $oldsepa = $sepa;
-        $boxchildren = '';
-        if ($stickyboxsets&&$searchby==''&&$dvd['boxchild']!=0) {
-            ProcessChildrenOf($dvd['id'], $sql, $numthispage, $secondcol, $thirdcol, $boxchildren, $plusdisplay, $plusgif, $numcols, $thisclass, 40);
-        }
-        if ($boxchildren != '') {
-            echo "$boximg$theboxparent$boxchildren</table></td></tr>\n";
+        if ($ajax) {
+            $rowClass = ($evenodd % 2) ? 'dvd-row dvd-row-odd' : 'dvd-row dvd-row-even';
+            $bsid = 'bs' . str_replace('.', '_', $htmlId);
+            $oldsepa = $sepa;
             $boxchildren = '';
-        }
-        else {
-            echo '<img src="gfx/none.gif" alt=""/><span style="width:2px"></span>'."$theboxparent";
+            if ($stickyboxsets&&$searchby==''&&$dvd['boxchild']!=0) {
+                ProcessChildrenOf($dvd['id'], $sql, $numthispage, $secondcol, $thirdcol, $boxchildren, $plusdisplay, $plusgif, $numcols, $thisclass, 40);
+            }
+            if ($boxchildren != '') {
+                echo "<div class=\"$rowClass\">"
+                    ."<span class=\"boxset-toggle\" data-target=\"$bsid\">+</span>"
+                    ."<a $linkattr title=\"$stitle\">$ttitle</a>"
+                    ."$secnum$cnum"
+                    ."</div>\n";
+                echo "<div id=\"$bsid\" style=\"display:none\">$boxchildren</div>\n";
+            } else {
+                echo "<div class=\"$rowClass\">"
+                    ."<a $linkattr title=\"$stitle\">$ttitle</a>"
+                    ."$secnum$cnum"
+                    ."</div>\n";
+            }
+        } else {
+            if ($evenodd % 2)
+                $thisclass = 'class=l';
+            else
+                $thisclass = 'class=o';
+
+            $boximg = '<img src="'.$plusgif.'" onclick="dh(\'bs'. str_replace(".", "_", $dvd['id']) .'\',this)" style="vertical-align:middle" alt=""/><span style="width:2px"></span>';
+            echo "<tr $thisclass><td style=\"padding-left:10px\">";
+            $theboxparent = "<a $linkattr "
+                    ."title=\"$stitle\">$ttitle</a></td>$secnum"
+                    ."$cnum</tr><tr class=line><td colspan=$numcols></td></tr>\n";
+            $oldsepa = $sepa;
+            $boxchildren = '';
+            if ($stickyboxsets&&$searchby==''&&$dvd['boxchild']!=0) {
+                ProcessChildrenOf($dvd['id'], $sql, $numthispage, $secondcol, $thirdcol, $boxchildren, $plusdisplay, $plusgif, $numcols, $thisclass, 40);
+            }
+            if ($boxchildren != '') {
+                echo "$boximg$theboxparent$boxchildren</table></td></tr>\n";
+                $boxchildren = '';
+            }
+            else {
+                echo '<img src="gfx/none.gif" alt=""/><span style="width:2px"></span>'."$theboxparent";
+            }
         }
         $evenodd++;
     }
@@ -1889,7 +2304,47 @@ global $db, $PHP_SELF, $mobilepage;
 
     }
 
-    echo <<<EOT
+    if ($ajax) {
+        // AJAX mode: simplified pagination with data attributes
+        $ajaxPrev = $ajaxNext = $ajaxFirst = $ajaxLast = '&nbsp;';
+        if ($TitlesPerPage != 0) {
+            if ($prow >= 0)
+                $ajaxFirst = "<a href=\"#\" data-startrow=\"0\">$lang[FIRST]</a>";
+            if ($prow >= 0)
+                $ajaxPrev = "<a href=\"#\" data-startrow=\"$prow\">$lang[PREV]</a>";
+            if ($nrow != $startrow)
+                $ajaxNext = "<a href=\"#\" data-startrow=\"$nrow\">$lang[NEXT]</a>";
+            if ($nrowlink)
+                $ajaxLast = "<a href=\"#\" data-startrow=\"$lpcount\">$lang[LAST]</a>";
+        }
+        // Build page number links
+        $ajaxPages = '';
+        if ($TitlesPerPage != 0 && $totrows > $TitlesPerPage) {
+            $totalPages = ceil($totrows / $TitlesPerPage);
+            $currentPage = floor($startrow / $TitlesPerPage) + 1;
+            $windowSize = 5;
+            $startPage = max(1, $currentPage - floor($windowSize / 2));
+            $endPage = min($totalPages, $startPage + $windowSize - 1);
+            if ($endPage - $startPage < $windowSize - 1)
+                $startPage = max(1, $endPage - $windowSize + 1);
+            for ($p = $startPage; $p <= $endPage; $p++) {
+                $sr = ($p - 1) * $TitlesPerPage;
+                if ($p == $currentPage)
+                    $ajaxPages .= "<span class=\"page-current\">$p</span> ";
+                else
+                    $ajaxPages .= "<a href=\"#\" data-startrow=\"$sr\">$p</a> ";
+            }
+        }
+        echo <<<EOT
+<div class="sidebar-pagination">
+$ajaxFirst $ajaxPrev $ajaxPages $ajaxNext $ajaxLast
+<span class="item-count">$numthispage $lang[ITEMS]</span>
+</div>
+</div>
+
+EOT;
+    } else {
+        echo <<<EOT
 <tr class=s>
 <td colspan=$numcols>
 <table width="100%" cellspacing=0 cellpadding=0>
@@ -1907,6 +2362,7 @@ global $db, $PHP_SELF, $mobilepage;
 </table></td></tr></table>$endbody</html>
 
 EOT;
+    }
     DebugSQL($db, "$action");
     exit;
 }
@@ -1928,11 +2384,23 @@ if ($action == 'show') {
         DebugSQL($db, "$action: $mediaid");
         exit;
     }
+    if ($mediaid == 'CoverFetcher' && is_readable(BASE_PATH . 'includes/fetch_covers.php')) {
+        include_once('fetch_covers.php');
+        DebugSQL($db, "$action: $mediaid");
+        exit;
+    }
+    if ($mediaid == 'UserPrefs' && is_readable(BASE_PATH . 'pages/userpref.php')) {
+        include_once('userpref.php');
+        DebugSQL($db, "$action: $mediaid");
+        exit;
+    }
     if ($mediaid == 'Gallery' || $mediaid == 'GalleryB') {
         include_once('gallery.php');
         DebugSQL($db, "$action: $mediaid");
         exit;
     }
+    // Pad mediaid to 20 bytes for binary(20) column comparison
+    if (strlen($mediaid) < 20) $mediaid = str_pad($mediaid, 20, "\x00");
     $result = $db->sql_query("SELECT * FROM $DVD_TABLE WHERE id='".$db->sql_escape($mediaid)."' LIMIT 1") or die($db->sql_error());
 
     $dvd = $db->sql_fetchrow($result);
@@ -1968,8 +2436,11 @@ if ($action == 'show') {
                 if ($extra != '')
                     $actor['role'] .= " ($extra)";
 
-                $actor['oc'] = "window.open('popup.php?acttype=ACTOR&amp;fullname=$actor[caid]',"
-                    ."'Actors',$ActorWindowSettings); return false;";
+                if ($ajax)
+                    $actor['oc'] = "loadPopup('ACTOR', '$actor[caid]'); return false;";
+                else
+                    $actor['oc'] = "window.open('popup.php?acttype=ACTOR&amp;fullname=$actor[caid]',"
+                        ."'Actors',$ActorWindowSettings); return false;";
                 GetHeadAndMouse($actor, $headcast, $castsubs, $chsimg, $mouse, $mediaid);
                 $fourdots = '....';
                 if ($actor['role'] == '')
@@ -2046,8 +2517,11 @@ if ($action == 'show') {
                 $xx = ($GroupIndent == 0)? $outerind: $outerind+20;
                 $ind = ($xx == 0)? '': " style=\"padding-left:{$xx}px\"";
 
-                $credit['oc'] = "window.open('popup.php?acttype=CREDIT&amp;fullname=$credit[caid]',"
-                    ."'Actors',$ActorWindowSettings); return false;";
+                if ($ajax)
+                    $credit['oc'] = "loadPopup('CREDIT', '$credit[caid]'); return false;";
+                else
+                    $credit['oc'] = "window.open('popup.php?acttype=CREDIT&amp;fullname=$credit[caid]',"
+                        ."'Actors',$ActorWindowSettings); return false;";
                 GetHeadAndMouse($credit, $headcrew, $crewsubs, $chsimg, $mouse, $mediaid);
                 $crrole = $lang[strtoupper(str_replace(' ','',$credit['creditsubtype']))];
                 if ($credit['customrole'] != '')
@@ -2309,8 +2783,11 @@ if ($action == 'show') {
         $dvd['mediacompanies'] = array();
         $result = $db->sql_query("SELECT * FROM $DVD_STUDIO_TABLE WHERE id='".$db->sql_escape($mediaid)."' ORDER BY ismediacompany ASC,dborder ASC") or die($db->sql_error());
         while ($studio = $db->sql_fetchrow($result)) {
-            $NewWindow = "window.open('popup.php?acttype=STUDIO&amp;fullname="
-                .urlencode($studio['studio'])."','Actors',$ActorWindowSettings); return false;";
+            if ($ajax)
+                $NewWindow = "loadPopup('STUDIO', '" . addslashes($studio['studio']) . "'); return false;";
+            else
+                $NewWindow = "window.open('popup.php?acttype=STUDIO&amp;fullname="
+                    .urlencode($studio['studio'])."','Actors',$ActorWindowSettings); return false;";
             if ($studio['ismediacompany'] == 0) {
                 if ($ps == '')
                     $ps = "<span style='font-weight:bold'>$lang[PRODUCTIONSTUDIOS]:</span>";
@@ -2446,7 +2923,7 @@ if ($action == 'show') {
 
         $dvd['p_overview'] = $dvd['overview'];
         if (!$AllowHTMLInOverview)
-            $dvd['p_overview'] = htmlspecialchars($dvd['p_overview'], ENT_COMPAT, 'ISO-8859-1');
+            $dvd['p_overview'] = htmlspecialchars($dvd['p_overview'], ENT_COMPAT, HTML_CHARSET);
         $dvd['p_overview'] = nl2br(fix1252($dvd['p_overview']));
 
         $dvd['thumbs'] = '&nbsp;';
@@ -2454,10 +2931,10 @@ if ($action == 'show') {
         $dvd['backimage'] = $dvd['backthumb'] = $dvd['backimageanchor'] = '';
 
         FormatTheTitle($dvd);
-        $TheTitle = fix1252(htmlspecialchars($dvd['title'], ENT_COMPAT, 'ISO-8859-1'));
+        $TheTitle = fix1252(htmlspecialchars($dvd['title'], ENT_COMPAT, HTML_CHARSET));
 
         $ImageNotFound = '';
-        if (is_readable('gfx/unknown.jpg'))
+        if (is_readable(BASE_PATH . 'gfx/unknown.jpg'))
             $ImageNotFound = 'gfx/unknown.jpg';
         if ($getimages > 0) {
             $hdflogo = $hdblogo = $tfclass = $tbclass = '';
@@ -2503,7 +2980,6 @@ if ($action == 'show') {
                 $ftname = find_a_file($dvd['id'], true, true);
                 $biname = find_a_file($dvd['id'], false, false);
                 $btname = find_a_file($dvd['id'], false, true);
-
                 if ($ftname != '') {
                     $dvd['frontthumb'] = "{$img_webpathf}$thumbnails/$ftname";
                 }
@@ -2763,8 +3239,30 @@ if ($action == 'show') {
         if (isset($matches)) unset($matches);
         $num_matches = count($IMDBNum);
 // Technically, we could cull IMDB duplicates, but it seems like a lot of work :)
+// TMDB auto-lookup: if no IMDB ID from notes/slot, check DB cache or query TMDB API
         if ($num_matches == 0) {
-// Only put in the IMDB _search_ if there is no IMDB link in the MyLinks section
+            if (!array_key_exists('imdbid', $dvd)) {
+                $db->sql_return_on_error(true);
+                $db->sql_query("ALTER TABLE $DVD_TABLE ADD COLUMN imdbid varchar(15) DEFAULT NULL");
+                $db->sql_return_on_error(false);
+                $dvd['imdbid'] = null;
+            }
+            if ($dvd['imdbid'] !== null && $dvd['imdbid'] !== '') {
+                $IMDBNum[] = $dvd['imdbid'];
+                $num_matches = 1;
+            } else if ($dvd['imdbid'] === null) {
+                $tmdbResult = tmdbLookupImdbId($dvd['title'], $dvd['productionyear'], $dvd['originaltitle'] ?? '');
+                if ($tmdbResult !== null) {
+                    $db->sql_query("UPDATE $DVD_TABLE SET imdbid='" . $db->sql_escape($tmdbResult)
+                        . "' WHERE id='" . $db->sql_escape($mediaid) . "'");
+                }
+                if ($tmdbResult !== null && $tmdbResult !== '') {
+                    $IMDBNum[] = $tmdbResult;
+                    $num_matches = 1;
+                }
+            }
+        }
+        if ($num_matches == 0) {
             if (stristr($mylinks, '.imdb.') === false)
                 $dvd['links'] .= "<br>\n$bullet<a target=\"_blank\" href=\"$lang[IMDBURL]?s=tt&q=" . urlencode($dvd['title']) . "\">$lang[IMDBNAME]</a>";
         }
@@ -2790,7 +3288,7 @@ if ($action == 'show') {
 
         $dvd['o_notes'] = preg_replace('|</body>|i', '</ body>', $dvd['notes']);
         if (!$DisplayNotesAsHTML) {
-            $dvd['notes'] = nl2br(str_replace('&#039;', '&apos;', htmlspecialchars($dvd['notes'], ENT_QUOTES, 'ISO-8859-1')));
+            $dvd['notes'] = nl2br(str_replace('&#039;', '&apos;', htmlspecialchars($dvd['notes'], ENT_QUOTES, HTML_CHARSET)));
         }
 
         $dvd['epg'] = $thefilename = '';
@@ -2869,7 +3367,7 @@ if ($action == 'show') {
 
         if ($AlwaysRemoveFromNotes != '')
             $dvd['notes'] = str_replace($AlwaysRemoveFromNotes, '', $dvd['notes']);
-        if ($skinfile != 'internal') {
+        if ($skinfile != 'internal' && !$ajax) {
             include_once('processskin.php');
 // if we get here, we really want to do the internal skin
         }
@@ -2878,9 +3376,9 @@ if ($action == 'show') {
         $dvd['notes'] = preg_replace($IMDBfmt, '', $dvd['notes']);
         unset($IMDBfmt);
 
-        $dvd['originaltitle'] = fix1252(htmlspecialchars($dvd['originaltitle'], ENT_COMPAT, 'ISO-8859-1'));
-        $dvd['sorttitle']     = fix1252(htmlspecialchars($dvd['sorttitle'], ENT_COMPAT, 'ISO-8859-1'));
-        $dvd['title']         = fix1252(htmlspecialchars($dvd['title'], ENT_COMPAT, 'ISO-8859-1'));
+        $dvd['originaltitle'] = fix1252(htmlspecialchars($dvd['originaltitle'], ENT_COMPAT, HTML_CHARSET));
+        $dvd['sorttitle']     = fix1252(htmlspecialchars($dvd['sorttitle'], ENT_COMPAT, HTML_CHARSET));
+        $dvd['title']         = fix1252(htmlspecialchars($dvd['title'], ENT_COMPAT, HTML_CHARSET));
         $xxx = '';
         if ($dvd['countryoforigin'] != '') {
             CountryToLang($dvd['countryoforigin'], $countryname, $countryloc);
@@ -2932,6 +3430,7 @@ if ($action == 'show') {
         $origtitle = $lang['ORIGINALTITLE'];
         if ($titleorig == 1)
             $origtitle = $lang['TITLE'];
+        if (!$ajax) {
         header('Content-Type: text/html; charset="windows-1252";');
         echo <<<EOT
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
@@ -2958,6 +3457,190 @@ var item=document.getElementById(theitems);
 </script>
 </head>
 <body>
+
+EOT;
+        } // end if (!$ajax) for show header
+
+        if ($ajax) {
+        // ===== BOOTSTRAP DVD DETAIL =====
+        $showClass_overview = $expandoverview ? 'show' : '';
+        $showClass_notes = $expandnotes ? 'show' : '';
+        $showClass_epg = $expandepg ? 'show' : '';
+        $showClass_crew = $expandcrew ? 'show' : '';
+        $showClass_cast = $expandcast ? 'show' : '';
+
+        echo <<<EOT
+<div class="detail-title d-flex justify-content-between align-items-center">
+  <span>$r$dvd[title]$locks[title]$J</span>
+  <span class="quick-nav">
+    <a href="#section-audio">$lang[AUDIOFORMAT]</a>
+    <a href="#section-extras">$lang[EXTRAS]</a>
+    <a href="#section-cast">$lang[CAST]</a>
+  </span>
+</div>
+<div class="detail-body">
+<div class="row g-3">
+<div class="col-lg-8 col-md-7">
+EOT;
+        // Label/value pairs
+        if ($dvd['originaltitle'] != '')
+            echo "<div class=\"row mb-1\"><div class=\"col-sm-4 label-cell\">$plwrapf$origtitle:$plwrapb</div><div class=\"col-sm-8 value-cell\">$dvd[originaltitle]</div></div>\n";
+        if ($dvd['countryoforigin'] != '')
+            echo "<div class=\"row mb-1\"><div class=\"col-sm-4 label-cell\">$plwrapf$lang[COUNTRYOFORIGIN]:$plwrapb</div><div class=\"col-sm-8 value-cell\">$dvd[countryoforigin]</div></div>\n";
+        if ($dvd['productionyear'] == '0') $dvd['productionyear'] = '&nbsp;';
+        echo "<div class=\"row mb-1\"><div class=\"col-sm-4 label-cell\">$plwrapf$lang[PRODUCTIONYEAR]:$plwrapb</div><div class=\"col-sm-8 value-cell\">$dvd[productionyear]$locks[productionyear]</div></div>\n";
+        echo "<div class=\"row mb-1\"><div class=\"col-sm-4 label-cell\">$plwrapf$dirname:$plwrapb</div><div class=\"col-sm-8 value-cell\">$dvd[p_directors]</div></div>\n";
+        echo "<div class=\"row mb-1\"><div class=\"col-sm-4 label-cell\">$plwrapf$lang[RATING]:$plwrapb</div><div class=\"col-sm-8 value-cell\">$ratinglogo$locks[rating]</div></div>\n";
+        echo "<hr class=\"my-1\" style=\"border-color:#ADA9A9\">\n";
+        echo "<div class=\"row mb-1\"><div class=\"col-sm-4 label-cell\">$plwrapf$lang[REGIONCODE]:$plwrapb</div><div class=\"col-sm-8 value-cell\">$regions$locks[regions]</div></div>\n";
+        echo "<div class=\"row mb-1\"><div class=\"col-sm-4 label-cell\">$plwrapf$lang[RUNNINGTIME]:$plwrapb</div><div class=\"col-sm-8 value-cell\">$runtime$locks[runningtime]</div></div>\n";
+        echo "<div class=\"row mb-1\"><div class=\"col-sm-4 label-cell\">$plwrapf$lang[CASETYPE]:$plwrapb</div><div class=\"col-sm-8 value-cell\">$dvd[p_casetype]$locks[casetype]</div></div>\n";
+        echo "<div class=\"row mb-1\"><div class=\"col-sm-4 label-cell\">$plwrapf$lang[FORMAT]:$plwrapb</div><div class=\"col-sm-8 value-cell\">$dvd[format]$locks[videoformats]</div></div>\n";
+        echo "<div class=\"row mb-1\"><div class=\"col-sm-4 label-cell\">$plwrapf$lang[MEDIA]:$plwrapb</div><div class=\"col-sm-8 value-cell\">$dvd[media]</div></div>\n";
+        echo "<div class=\"row mb-1\"><div class=\"col-sm-4 label-cell\">$plwrapf$lang[RELEASED]:$plwrapb</div><div class=\"col-sm-8 value-cell\">$dvd[p_released]$locks[releasedate]</div></div>\n";
+        echo "<div class=\"row mb-1\"><div class=\"col-sm-4 label-cell\">$plwrapf$lang[COLLECTIONTYPE]:$plwrapb</div><div class=\"col-sm-8 value-cell\">$ctype $cnum</div></div>\n";
+        echo "<div class=\"row mb-1\"><div class=\"col-sm-4 label-cell\">$plwrapf$locname:$plwrapb</div><div class=\"col-sm-8 value-cell\">$locval</div></div>\n";
+        echo "<hr class=\"my-1\" style=\"border-color:#ADA9A9\">\n";
+
+        // Purchase info
+        $giftfiddle1 = $lang['PURCHASEDATE'];
+        $giftfiddle2 = $lang['PURCHASEPRICE'];
+        $giftfiddle3 = $dvd['purchaseprice'];
+        if ($dvd['gift']) {
+            $giftfiddle1 = $lang['RECEIVED'];
+            $giftfiddle2 = $lang['GIFTFROM'];
+            $giftfiddle3 = '';
+            if ($dvd['giftuid'] != 0) {
+                $userres = $db->sql_query("SELECT firstname,lastname FROM $DVD_USERS_TABLE WHERE uid=$dvd[giftuid]") or die($db->sql_error());
+                $r2 = $db->sql_fetchrow($userres);
+                $db->sql_freeresult($userres);
+                $giftfiddle3 = $r2['firstname'] . ' ' . HideName($r2['lastname']);
+            }
+        }
+        echo "<div class=\"row mb-1\"><div class=\"col-sm-4 label-cell\">$plwrapf$giftfiddle1:$plwrapb</div><div class=\"col-sm-8 value-cell\">$dvd[p_purchasedate]</div></div>\n";
+        echo "<div class=\"row mb-1\"><div class=\"col-sm-4 label-cell\">$plwrapf$giftfiddle2:$plwrapb</div><div class=\"col-sm-8 value-cell\">$plwrapf$giftfiddle3$plwrapb</div></div>\n";
+
+        if (DisplayIfIsPrivateOrAlways($displaySRP))
+            echo "<div class=\"row mb-1\"><div class=\"col-sm-4 label-cell\">$plwrapf$lang[SRP]:$plwrapb</div><div class=\"col-sm-8 value-cell\">$dvd[srp] $dvd[srpcurrencyid]$locks[srp]</div></div>\n";
+        if (DisplayIfIsPrivateOrAlways($displayplace))
+            echo "<div class=\"row mb-1\"><div class=\"col-sm-4 label-cell\">$plwrapf$lang[PURCHASEPLACE]:$plwrapb</div><div class=\"col-sm-8 value-cell\">$purchaseplace</div></div>\n";
+
+        // Reviews
+        if ($SeparateReviews) {
+            if ($dvd['p_reviewfilm'] != '' && strpos($reviewgraph, 'F') !== false)
+                echo "<div class=\"row mb-1\"><div class=\"col-sm-4 label-cell\">$lang[REVIEWFILM]:</div><div class=\"col-sm-8 value-cell\">$dvd[p_reviewfilm]</div></div>\n";
+            if ($dvd['p_reviewvideo'] != '' && strpos($reviewgraph, 'V') !== false)
+                echo "<div class=\"row mb-1\"><div class=\"col-sm-4 label-cell\">$lang[REVIEWVIDEO]:</div><div class=\"col-sm-8 value-cell\">$dvd[p_reviewvideo]</div></div>\n";
+            if ($dvd['p_reviewaudio'] != '' && strpos($reviewgraph, 'A') !== false)
+                echo "<div class=\"row mb-1\"><div class=\"col-sm-4 label-cell\">$lang[REVIEWAUDIO]:</div><div class=\"col-sm-8 value-cell\">$dvd[p_reviewaudio]</div></div>\n";
+            if ($dvd['p_reviewextras'] != '' && strpos($reviewgraph, 'E') !== false)
+                echo "<div class=\"row mb-1\"><div class=\"col-sm-4 label-cell\">$lang[REVIEWEXTRA]:</div><div class=\"col-sm-8 value-cell\">$dvd[p_reviewextras]</div></div>\n";
+        } else {
+            if ($dvd['reviewfilm'] != 0 || $dvd['reviewvideo'] != 0 || $dvd['reviewaudio'] != 0 || $dvd['reviewextras'] != 0 || $displayreviewsEQ0)
+                echo "<div class=\"row mb-1\"><div class=\"col-sm-4 label-cell\">$lang[REVIEWS]:</div><div class=\"col-sm-8 value-cell\"><div title=\"" . LabelAReviewGraph($dvd, $reviewgraph, false) . '">' . DrawAReviewGraph($dvd, $reviewgraph, 240, 20, '') . "</div></div></div>\n";
+        }
+        echo "<hr class=\"my-1\" style=\"border-color:#ADA9A9\">\n";
+
+        // Overview (collapsible)
+        echo "<div class=\"detail-section-header\" data-bs-toggle=\"collapse\" data-bs-target=\"#overviewrow\"><i class=\"bi bi-chevron-down\"></i> $lang[OVERVIEW]$locks[overview]</div>\n";
+        echo "<div class=\"collapse $showClass_overview\" id=\"overviewrow\"><div class=\"value-cell p-2\">$dvd[p_overview]</div></div>\n";
+
+        // Notes (collapsible)
+        if ($dvd['notes'] != '') {
+            if ($UseIframeForNotes) {
+                $ifh = ($IframeHeight != 0) ? "height=\"{$IframeHeight}px\"" : '';
+                $notesContent = "<iframe width='100%' $ifh src='$PHP_SELF?action=notes&amp;mediaid=$dvd[id]'></iframe>";
+            } else {
+                $notesContent = $dvd['notes'];
+            }
+            echo "<div class=\"detail-section-header\" data-bs-toggle=\"collapse\" data-bs-target=\"#notesrow\"><i class=\"bi bi-chevron-down\"></i> $lang[NOTES]</div>\n";
+            echo "<div class=\"collapse $showClass_notes\" id=\"notesrow\"><div class=\"value-cell p-2\">$notesContent</div></div>\n";
+        }
+
+        // EPG (collapsible)
+        if ($dvd['epg'] != '') {
+            if ($UseIframeForEPGs) {
+                $ifh = ($IframeHeight != 0) ? "height=\"{$IframeHeight}px\"" : '';
+                $epgContent = "<iframe width='100%' $ifh src='$dvd[epg]'></iframe>";
+            } else {
+                $epgContent = $dvd['epg'];
+            }
+            echo "<div class=\"detail-section-header\" data-bs-toggle=\"collapse\" data-bs-target=\"#epgrow\"><i class=\"bi bi-chevron-down\"></i> $lang[EPG]</div>\n";
+            echo "<div class=\"collapse $showClass_epg\" id=\"epgrow\"><div class=\"value-cell p-2\">$epgContent</div></div>\n";
+        }
+
+        echo "</div><!-- end left col -->\n";
+
+        // Right column: Covers + Links
+        echo "<div class=\"col-lg-4 col-md-5\">\n";
+        echo "<div class=\"card\"><div class=\"card-header f4\">$lang[COVERS]$locks[covers]</div><div class=\"card-body text-center\">$dvd[thumbs]</div></div>\n";
+        echo "<div class=\"card mt-2\"><div class=\"card-header f4\">$lang[MISCLINKS]</div><div class=\"card-body value-cell\">$dvd[links]</div></div>\n";
+        echo "</div><!-- end right col -->\n";
+        echo "</div><!-- end row -->\n";
+
+        // Genres + Studios side by side
+        echo "<div class=\"row g-2 mt-2\"><div class=\"col-md-6\"><div class=\"card\"><div class=\"card-header f4\">$lang[GENRES]$locks[genres]</div><div class=\"card-body value-cell\">$dvd[p_genres]</div></div></div>\n";
+        echo "<div class=\"col-md-6\"><div class=\"card\"><div class=\"card-header f4\">$lang[STUDIOS]$locks[studios]</div><div class=\"card-body value-cell\">$dvd[p_studios]</div></div></div></div>\n";
+
+        // Audio + Subtitles side by side
+        echo "<div class=\"row g-2 mt-2\" id=\"section-audio\"><div class=\"col-md-6\"><div class=\"card\"><div class=\"card-header f4\">$lang[AUDIOFORMAT]$locks[audio]</div><div class=\"card-body value-cell\">$dvd[p_audio]</div></div></div>\n";
+        echo "<div class=\"col-md-6\"><div class=\"card\"><div class=\"card-header f4\">$lang[SUBTITLES]$locks[subtitles]</div><div class=\"card-body value-cell\">$dvd[p_subtitles]</div></div></div></div>\n";
+
+        // Tags
+        if (DisplayIfIsPrivateOrAlways($displaytags) && ($dvd['p_tags'] != ''))
+            echo "<div class=\"card mt-2\"><div class=\"card-header f4\">$lang[TAGS]</div><div class=\"card-body value-cell\">$dvd[p_tags]</div></div>\n";
+
+        // Discs
+        if ($dvd['p_discs'] != '') {
+            echo "<div class=\"card mt-2\"><div class=\"card-header f4\">$lang[DISCS]$locks[discinfo]</div><div class=\"card-body p-0\"><div class=\"table-responsive\"><table class=\"table table-sm table-striped mb-0\"><thead><tr>";
+            echo "<th class=\"f4\">$lang[DISCNO]</th><th class=\"f4\">$lang[DESCRIPTION]</th>";
+            echo "<th class=\"f4 text-center\" title=\"$lang[SIDEAID]\">$lang[SIDEA]</th>";
+            echo "<th class=\"f4 text-center\" title=\"$lang[SIDEBID]\">$lang[SIDEB]</th>";
+            echo "<th class=\"f4 text-center\" title=\"$lang[DUALSIDED]\">$lang[DS]</th>";
+            echo "<th class=\"f4 text-center\" title=\"$lang[DUALLAYERED] A\">$lang[DL] A</th>";
+            echo "<th class=\"f4 text-center\" title=\"$lang[DUALLAYERED] B\">$lang[DL] B</th>";
+            if ($IsPrivate)
+                echo "<th class=\"f4\">$lang[LOCATION]</th><th class=\"f4\">$lang[SLOT]</th>";
+            echo "</tr></thead><tbody>$dvd[p_discs]</tbody></table></div></div></div>\n";
+        }
+
+        // Events
+        if ($dvd['p_events'] != '') {
+            echo "<div class=\"card mt-2\"><div class=\"card-header f4\">$lang[EVENTS]</div><div class=\"card-body p-0\"><div class=\"table-responsive\"><table class=\"table table-sm table-striped mb-0\"><thead><tr>";
+            echo "<th class=\"f4\">$lang[USERNAME]</th>";
+            echo "<th class=\"f4 text-center\">$lang[PHONE]</th>";
+            echo "<th class=\"f4 text-center\">$lang[EMAIL]</th>";
+            echo "<th class=\"f4 text-center\">$lang[EVENT]</th>";
+            echo "<th class=\"f4 text-center\">$lang[TIMESTAMP]</th>";
+            echo "<th class=\"f4\">$lang[EVENTNOTE]</th>";
+            echo "</tr></thead><tbody>$dvd[p_events]</tbody></table></div></div></div>\n";
+        }
+
+        // Extras
+        echo "<div class=\"card mt-2\" id=\"section-extras\"><div class=\"card-header f4\">$lang[EXTRAS]$locks[features]</div><div class=\"card-body value-cell\">$dvd[p_extras]</div></div>\n";
+
+        // Easter Eggs
+        if (strlen($dvd['eastereggs']) > 0) {
+            $dvd['eastereggs'] = nl2br($dvd['eastereggs']);
+            echo "<div class=\"card mt-2\"><div class=\"card-header f4\">$lang[EASTEREGGS]$locks[eastereggs]</div><div class=\"card-body value-cell\">$dvd[eastereggs]</div></div>\n";
+        }
+
+        // Credits (collapsible)
+        if (strlen($dvd['p_credits']) > 0) {
+            echo "<div class=\"card mt-2\"><div class=\"card-header f4 detail-section-header\" data-bs-toggle=\"collapse\" data-bs-target=\"#crewrow\"><i class=\"bi bi-chevron-down\"></i> $lang[CREDITHEAD]$locks[crew]</div>\n";
+            echo "<div class=\"collapse $showClass_crew\" id=\"crewrow\"><div class=\"card-body value-cell p-0\"><table class=\"table table-sm mb-0\"><tbody>$dvd[p_credits]</tbody></table></div></div></div>\n";
+        }
+
+        // Cast (collapsible)
+        echo "<div class=\"card mt-2\" id=\"section-cast\"><div class=\"card-header f4 detail-section-header\" data-bs-toggle=\"collapse\" data-bs-target=\"#castrow\"><i class=\"bi bi-chevron-down\"></i> $lang[CAST]$locks[cast]</div>\n";
+        echo "<div class=\"collapse $showClass_cast\" id=\"castrow\"><div class=\"card-body value-cell p-0\"><table class=\"table table-sm mb-0\"><tbody>$dvd[p_actors]</tbody></table></div></div></div>\n";
+
+        echo "</div><!-- end detail-body -->\n";
+        echo "<script type=\"text/javascript\" src=\"wz_tooltip.js\"></script>\n";
+        // ===== END BOOTSTRAP DVD DETAIL =====
+        } else {
+        // ===== LEGACY TABLE-BASED DVD DETAIL =====
+        echo <<<EOT
 <table width="100%">
 <tr>
 <td class=f1 rowspan=3>$r$dvd[title]$locks[title]$J</td>
@@ -3483,13 +4166,16 @@ $dvd[p_actors]
 </tr>
 </table>
 <script type="text/javascript" src="wz_tooltip.js"></script>
-$endbody
-</html>
 
 EOT;
+        } // end legacy table-based detail (else branch of $ajax)
+        if (!$ajax) {
+            echo "$endbody\n</html>\n";
+        }
 
     }
     else {
+        if (!$ajax) {
         header('Content-Type: text/html; charset="windows-1252";');
         echo <<<EOT
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
@@ -3503,16 +4189,21 @@ EOT;
 <link rel="apple-touch-icon" sizes="180x180" href="$iconPath/apple-touch-icon-180x180.png">
 </head>
 <body>
+
+EOT;
+        } // end if (!$ajax) for empty list header
+        echo <<<EOT
 <table width="100%">
 <tr>
 <td class=f1 rowspan=3>$lang[EMPTYLIST]<br><font size=2>0 $lang[ITEMS]</font></td>
 <td class=nav width=70>$lang[NOMEDIA]</td>
 </tr>
 </table>
-$endbody
-</html>
 
 EOT;
+        if (!$ajax) {
+            echo "$endbody\n</html>\n";
+        }
     }
     DebugSQL($db, "$action: $mediaid");
     exit;

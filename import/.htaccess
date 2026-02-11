@@ -1,0 +1,3 @@
+<FilesMatch "\.(xml|gz|bz2|zip)$">
+    Require all denied
+</FilesMatch>
