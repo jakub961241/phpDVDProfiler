@@ -389,16 +389,19 @@ function tt_Show(t_e, t_id, t_sup, t_clk, t_delay, t_fix, t_left, t_offx, t_offy
 		if(t_fix) tt_SetDivPos(tt_Int((t_fix = t_fix.split(','))[0]), tt_Int(t_fix[1]));
 		else tt_SetDivPos(tt_EvX(t_e), tt_EvY(t_e));
 
-		var t_txt = 'tt_ShowDiv(\'true\');';
-		if(t_sticky) t_txt += '{'+
-				'tt_ReleasMov();'+
-				(t_clk? ('window.tt_upFunc = document.onmouseup || null;'+
-				'if(tt_ce) document.captureEvents(Event.MOUSEUP);'+
-				'document.onmouseup = new Function("window.setTimeout(\'tt_Hide();\', 10);");') : '')+
-			'}';
-		else if(t_static) t_txt += 'tt_ReleasMov();';
-		if(t_temp > 0) t_txt += 'window.tt_rtm = window.setTimeout(\'tt_sticky = false; tt_Hide();\','+t_temp+');';
-		window.tt_rdl = window.setTimeout(t_txt, t_delay);
+		window.tt_rdl = window.setTimeout(function() {
+			tt_ShowDiv('true');
+			if(t_sticky) {
+				tt_ReleasMov();
+				if(t_clk) {
+					window.tt_upFunc = document.onmouseup || null;
+					if(tt_ce) document.captureEvents(Event.MOUSEUP);
+					document.onmouseup = function() { window.setTimeout(function() { tt_Hide(); }, 10); };
+				}
+			}
+			else if(t_static) { tt_ReleasMov(); }
+			if(t_temp > 0) { window.tt_rtm = window.setTimeout(function() { tt_sticky = false; tt_Hide(); }, t_temp); }
+		}, t_delay);
 
 		if(!t_fix)
 		{
@@ -415,7 +418,7 @@ function tt_Move(t_ev)
 	{
 		if(tt_wait) return;
 		tt_wait = true;
-		setTimeout('tt_wait = false;', 5);
+		setTimeout(function() { tt_wait = false; }, 5);
 	}
 	var t_e = t_ev || window.event;
 	tt_SetDivPos(tt_EvX(t_e), tt_EvY(t_e));
@@ -465,7 +468,11 @@ function tt_Init()
 		{--j;
 			if(typeof (t_tj = tags[j]).onmouseover == "function" && t_tj.onmouseover.toString().indexOf(esc) != -1 && !tt_n6 || tt_n6 && (over = t_tj.getAttribute("onmouseover")) && over.indexOf(esc) != -1)
 			{
-				if(over) t_tj.onmouseover = new Function(over);
+				if(over && typeof t_tj.onmouseover !== "function") {
+					// N6/Gecko compat: extract tooltip text from attribute string safely
+					var m = over.match(/return\s+escape\(\s*'([\s\S]*)'\s*\)/);
+					if(m) t_tj.onmouseover = (function(text) { return function() { return escape(text); }; })(m[1]);
+				}
 				var txt = unescape(t_tj.onmouseover());
 				htm += tt_Htm(
 					t_tj,
@@ -473,20 +480,22 @@ function tt_Init()
 					txt.wzReplace("& ","&")
 				);
 				// window. to circumvent the FF Alzheimer Bug
-				t_tj.onmouseover = new Function('e',
-					'if(window.tt_Show && tt_Show) tt_Show(e,'+
-					'"tOoLtIp' +i+''+j+ '",'+
-					((typeof t_tj.T_ABOVE != tt_u)? t_tj.T_ABOVE : ttAbove)+','+
-					((typeof t_tj.T_CLICKCLOSE != tt_u)? t_tj.T_CLICKCLOSE : ttClickClose)+','+
-					((typeof t_tj.T_DELAY != tt_u)? t_tj.T_DELAY : ttDelay)+','+
-					((typeof t_tj.T_FIX != tt_u)? '"'+t_tj.T_FIX+'"' : '""')+','+
-					((typeof t_tj.T_LEFT != tt_u)? t_tj.T_LEFT : ttLeft)+','+
-					((typeof t_tj.T_OFFSETX != tt_u)? t_tj.T_OFFSETX : ttOffsetX)+','+
-					((typeof t_tj.T_OFFSETY != tt_u)? t_tj.T_OFFSETY : ttOffsetY)+','+
-					((typeof t_tj.T_STATIC != tt_u)? t_tj.T_STATIC : ttStatic)+','+
-					((typeof t_tj.T_STICKY != tt_u)? t_tj.T_STICKY : ttSticky)+','+
-					((typeof t_tj.T_TEMP != tt_u)? t_tj.T_TEMP : ttTemp)+
-					');'
+				t_tj.onmouseover = (function(id, above, clickclose, delay, fix, left, offx, offy, isStatic, sticky, temp) {
+					return function(e) {
+						if(window.tt_Show && tt_Show) tt_Show(e, id, above, clickclose, delay, fix, left, offx, offy, isStatic, sticky, temp);
+					};
+				})(
+					"tOoLtIp"+i+""+j,
+					(typeof t_tj.T_ABOVE != tt_u)? t_tj.T_ABOVE : ttAbove,
+					(typeof t_tj.T_CLICKCLOSE != tt_u)? t_tj.T_CLICKCLOSE : ttClickClose,
+					(typeof t_tj.T_DELAY != tt_u)? t_tj.T_DELAY : ttDelay,
+					(typeof t_tj.T_FIX != tt_u)? t_tj.T_FIX : "",
+					(typeof t_tj.T_LEFT != tt_u)? t_tj.T_LEFT : ttLeft,
+					(typeof t_tj.T_OFFSETX != tt_u)? t_tj.T_OFFSETX : ttOffsetX,
+					(typeof t_tj.T_OFFSETY != tt_u)? t_tj.T_OFFSETY : ttOffsetY,
+					(typeof t_tj.T_STATIC != tt_u)? t_tj.T_STATIC : ttStatic,
+					(typeof t_tj.T_STICKY != tt_u)? t_tj.T_STICKY : ttSticky,
+					(typeof t_tj.T_TEMP != tt_u)? t_tj.T_TEMP : ttTemp
 				);
 				t_tj.onmouseout = tt_Hide;
 				tt_DeAlt(t_tj);

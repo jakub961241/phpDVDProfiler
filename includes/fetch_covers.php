@@ -20,7 +20,7 @@ if (isset($_GET['tmdb_action'])) {
         $url = "https://api.themoviedb.org/3/search/movie?api_key=$TMDB_API_KEY"
              . "&query=" . urlencode($query)
              . "&language=cs-CZ&include_adult=false";
-        if ($year) $url .= "&year=$year";
+        if ($year !== '' && ctype_digit($year)) $url .= "&year=" . urlencode($year);
         $ctx = stream_context_create(['http' => ['timeout' => 10]]);
         $response = @file_get_contents($url, false, $ctx);
         echo ($response !== false) ? $response : json_encode(['error' => 'TMDB API request failed']);
@@ -33,7 +33,17 @@ if (isset($_GET['tmdb_action'])) {
         $size = $_GET['size'] ?? 'original';
         if (!$mediaid || !$poster_path) { echo json_encode(['error' => 'Missing parameters']); exit; }
 
+        // Validate $size against allowed TMDB image sizes
+        $allowedSizes = ['w92','w154','w185','w342','w500','w780','original'];
+        if (!in_array($size, $allowedSizes, true)) { echo json_encode(['error' => 'Invalid size']); exit; }
+
+        // Validate $poster_path: must be /alphanumeric+dots+hyphens (e.g. /abc123.jpg)
+        if (!preg_match('#^/[a-zA-Z0-9._-]+$#', $poster_path)) { echo json_encode(['error' => 'Invalid poster path']); exit; }
+
+        // Sanitize $mediaid: strip null bytes and reject path traversal characters
         $cleanId = rtrim($mediaid, "\x00");
+        if ($cleanId === '' || preg_match('#[/\\\\.]#', $cleanId)) { echo json_encode(['error' => 'Invalid media ID']); exit; }
+
         $filename = $img_physpath . $cleanId . 'f.jpg';
         $thumbname = $img_physpath . $thumbnails . '/' . $cleanId . 'f.jpg';
 

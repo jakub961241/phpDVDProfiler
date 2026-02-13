@@ -1,18 +1,16 @@
 var NavLoaded=false, MenuLoaded=false, HowLongToWait=8000;
 // HowLongToWait is the maximum number of milliseconds to wait for the two frames to have loaded
 
-function ExecuteAfterAllHaveLoaded(code) {
+function ExecuteAfterAllHaveLoaded(fn) {
 	if (NavLoaded === false || MenuLoaded === false) {
 		if (HowLongToWait > 0) {
 			HowLongToWait -= 100;
-			setTimeout('ExecuteAfterAllHaveLoaded("'+code+'")', 100);
+			setTimeout(function() { ExecuteAfterAllHaveLoaded(fn); }, 100);
 			return(false);
 		}
-//		else
-//			alert('Not waiting any longer!!!');
 	}
-	if (code != '')
-		eval(code);
+	if (typeof fn === 'function')
+		fn();
 	return(true);
 }
 
@@ -20,7 +18,7 @@ function MenuInit() {
 	MenuLoaded = true;
 // a resize can arrive after the flags have been set but before the initial resize
 // but it doesn't matter because that can happen with quick resize-events anyway.
-	ExecuteAfterAllHaveLoaded('nav.ResizeHeader();');
+	ExecuteAfterAllHaveLoaded(function() { nav.ResizeHeader(); });
 }
 
 function DoResizeHeader() {

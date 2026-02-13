@@ -62,9 +62,9 @@ var obj, found=0;
 
 function PopulateMenuFrame(whichcol, whichway) {
 var theimg, ar, selectedText;
-var img = /(.*)(<img )(.*)(gfx\/)(.*)(\.gif)(.*)(&nbsp;)(.*)/i;
-var ord = /(<a .*)(onclick=)([^\ ]*)(.*)(order=)([^&]*)(&)([^>]*)(>)(.*)(<\/a>)/i;
-var thetext = /(.*)(title=)([^>]*)(.*)(<\/a>)(.*)/i;
+var img = /(.*?)(<img )(.*?)(gfx\/)(.*?)(\.gif)(.*?)(&nbsp;)(.*)/i;
+var ord = /(<a .*?)(onclick=)([^ ]*)(.*?)(order=)([^&]*)(&)([^>]*)(>)(.*?)(<\/a>)/i;
+var thetext = /(.*?)(title=)([^>]*)(.*?)(<\/a>)(.*)/i;
 var way=new Array();
 
 	way["asc"] = "desc";
