@@ -368,13 +368,13 @@ EOT;
 
 // I've created a landing page on bws.com for the about. it links back to the pages on dvdaholic.
 $vver = preg_replace('/\./', '_', $ws_version);
-$vlink = "http://www.bws.com/phpdvdprofiler/ws_version_$vver.html";
+$vlink = "https://www.bws.com/phpdvdprofiler/ws_version_$vver.html";
 #$vlink = "http://www.dvdaholic.me.uk/phpdvdprofiler/ws_version_$vver.html";
 #$vlink = "http://didi/dvd/ws_version_$vver.html";
 echo<<<EOT
     momItems[num++]=["{$lang['WS']['INFO']}"]
-    momItems[num++]=["DVD Profiler", "http://www.invelos.com", "_blank"]
-    momItems[num++]=["$lang[ANDYFORUM]", "http://www.dvdaholic.me.uk/forums/", "_blank"]
+    momItems[num++]=["DVD Profiler", "https://www.invelos.com", "_blank"]
+    momItems[num++]=["$lang[ANDYFORUM]", "https://www.dvdaholic.me.uk/forums/", "_blank"]
     momItems[num++]=["{$lang['WS']['ABOUT']}", "javascript:; \" onClick=\" window.open('{$vlink}','About','toolbar=no, width=670, height=400, resizable=yes, scrollbars=yes, status=yes'); return true;", ""]
     MOMbilden();
 

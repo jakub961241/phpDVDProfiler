@@ -1571,7 +1571,9 @@ global $db_schema_version, $AddBannerOnThumbnails;
                 $sortorder = 8000 + $dborder;
             if ($d == '') {
                 $d = $u;
-                if (strncasecmp($d, 'http://', 7) == 0 || strncasecmp($d, 'file://', 7) == 0)
+                if (strncasecmp($d, 'https://', 8) == 0)
+                    $d = substr($d, 8);
+                elseif (strncasecmp($d, 'http://', 7) == 0 || strncasecmp($d, 'file://', 7) == 0)
                     $d = substr($d, 7);
                 if (strncasecmp($d, 'www.', 4) == 0)
                     $d = substr($d, 4);

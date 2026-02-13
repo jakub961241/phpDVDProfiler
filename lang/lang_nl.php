@@ -23,10 +23,10 @@ $lang['SKINDATEFORMAT'] = "%d/%m/%Y";
 //$lang['IMDBURL'] = "$lang[IMDBSITE]/film/search";
 //$lang['IMDBNAME'] = "Bekijk recencies op Moviemeter";
 //
-$lang['IMDBSITE'] = "http://www.imdb.com";
+$lang['IMDBSITE'] = "https://www.imdb.com";
 $lang['IMDBURL'] = "$lang[IMDBSITE]/find";
 $lang['IMDBNAME'] = "US IMDb";
-$lang['WIKIURL'] = "http://en.wikipedia.org/wiki/Special:Search/";
+$lang['WIKIURL'] = "https://en.wikipedia.org/wiki/Special:Search/";
 $lang['WIKINAME'] = "Wikipedia";
 
 $lang['CONTRIBUTORS'] = "Profielbijdragers";

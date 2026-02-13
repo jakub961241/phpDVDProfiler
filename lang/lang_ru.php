@@ -39,10 +39,10 @@ $lang['MON_THOUSANDS_SEP']  = '.';                                              
 $lang['DATEFORMAT']         = "%d %B %Y";                                                                                                                               // %B %d, %Y
 $lang['SKINDATEFORMAT'] = "%d/%m/%Y";
 
-$lang['IMDBSITE'] = "http://www.imdb.com";
+$lang['IMDBSITE'] = "https://www.imdb.com";
 $lang['IMDBURL'] = "$lang[IMDBSITE]/Find";
 $lang['IMDBNAME'] = "&#1057;&#1064;&#1040; IMDb";                                                                                                               // США IMDb          ~ US IMDb
-$lang['WIKIURL'] = "http://en.wikipedia.org/wiki/Special:Search/";
+$lang['WIKIURL'] = "https://en.wikipedia.org/wiki/Special:Search/";
 $lang['WIKINAME'] = "Wikipedia";
 
 $lang['CONTRIBUTORS']       = "&#1042;&#1082;&#1083;&#1072;&#1076;&#1095;&#1080;&#1082;&#1080; &#1087;&#1088;&#1086;&#1092;&#1080;&#1083;&#1103;";                      // Вкладчики профиля    ~ Profile Contributors

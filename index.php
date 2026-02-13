@@ -2064,7 +2064,7 @@ EOT;
     }
     echo <<<EOT
     momItems[num++]=["$lang[MISCLINKS]"]
-    momItems[num++]=["DVD Profiler V3.x", "http://www.invelos.com", "_blank"]
+    momItems[num++]=["DVD Profiler V3.x", "https://www.invelos.com", "_blank"]
     momItems[num++]=["$lang[NEWRELEASES]", "https://www.joblo.com/blu-rays-dvds/release-dates/", "_blank"]
 
 EOT;
@@ -3109,7 +3109,7 @@ if ($action == 'show') {
         if (!$locale)
             $locale = '0';
 
-        $regions = "<a target=\"_blank\" href=\"http://www.invelos.com/Forums.aspx?task=contributionnotes&amp;type=DVD&amp;ProfileUPC=$dvd[id]\">$dvd[upc]</a>";
+        $regions = "<a target=\"_blank\" href=\"https://www.invelos.com/Forums.aspx?task=contributionnotes&amp;type=DVD&amp;ProfileUPC=$dvd[id]\">$dvd[upc]</a>";
         $regions .= " <img src=\"gfx/loc$locale.gif\" style=\"vertical-align:-30%; margin-bottom:2px\" title=\"" . $lang['LOCALE'.$locale] .'" alt=""/> ';
 
         if (strstr($dvd['region'], '0') !== false) {
@@ -3179,18 +3179,18 @@ if ($action == 'show') {
         $dvd['purchaseplace'] = '';
         if ($supplier !== false) {
             $dvd['purchaseplace'] = $supplier['suppliername'];
-            $supplier['supplierurl'] = preg_replace('/http:\/\//i', '', $supplier['supplierurl']);
+            $supplier['supplierurl'] = preg_replace('/https?:\/\//i', '', $supplier['supplierurl']);
             $supbullet = ($supplier['suppliertype'] == "O")? $bullet: '';
             if ($supplier['supplierurl'] != '')
-                $purchaseplace = "$supbullet<a target=\"_blank\" href=\"http://$supplier[supplierurl]\">$supplier[suppliername]</a>";
+                $purchaseplace = "$supbullet<a target=\"_blank\" href=\"https://$supplier[supplierurl]\">$supplier[suppliername]</a>";
             else
                 $purchaseplace = "$supbullet$supplier[suppliername]";
         }
 
-        $dvd['links'] = "window.open('http://www.invelos.com/dvdpro/userinfo/ProfileContributors.aspx?UPC=$dvd[id]','Contributors','toolbar=no,width=702,height=499,resizable=yes,scrollbars=yes,status=yes'); return false;";
+        $dvd['links'] = "window.open('https://www.invelos.com/dvdpro/userinfo/ProfileContributors.aspx?UPC=$dvd[id]','Contributors','toolbar=no,width=702,height=499,resizable=yes,scrollbars=yes,status=yes'); return false;";
         $dvd['links'] = "$bullet<a href=\"javascript:;\" onClick=\"$dvd[links]\">$lang[CONTRIBUTORS]</a><br>\n";
 
-        $tmp = "window.open('http://www.invelos.com/ProfileLinks.aspx?UPC=$dvd[id]','ProfileLinks','toolbar=no,width=1017,height=499,resizable=yes,scrollbars=yes,status=yes'); return false;";
+        $tmp = "window.open('https://www.invelos.com/ProfileLinks.aspx?UPC=$dvd[id]','ProfileLinks','toolbar=no,width=1017,height=499,resizable=yes,scrollbars=yes,status=yes'); return false;";
         $dvd['links'] .= "$bullet<a href=\"javascript:;\" onClick=\"$tmp\">$lang[PROFILELINKS]</a>";
 
 // Prepare to add MyLinks to the links display. Make this all temporary so that we can conditionally put an IMDB search in ...

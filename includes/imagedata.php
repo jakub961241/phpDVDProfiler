@@ -85,10 +85,10 @@ function senddata($data, $remote_page, $boundary)
 function servername($txt)
 {
     if (substr(strtoupper($txt),0,4)=='WWW.')
-        $txt='HTTP://'.$txt;
-    if (substr(strtoupper($txt),0,7)!='HTTP://')
+        $txt='https://'.$txt;
+    if (!preg_match('~^https?://~i', $txt))
         return 0;
-    preg_match('~^(http://([^/ ]+))~i',$txt,$arr);
+    preg_match('~^(https?://([^/ ]+))~i',$txt,$arr);
     return $arr[2];
 }
 
@@ -206,7 +206,7 @@ if ($ii) {
     // init ...
     srand((double)microtime()*1000000);
     #$remote_page = 'http://andy.snowhopers.com/ii/do_upload.php';
-    $remote_page = 'http://dvdaholic.me.uk/ii/do_upload.php';
+    $remote_page = 'https://dvdaholic.me.uk/ii/do_upload.php';
     $boundary = '---------------------------'.substr(md5(rand(0,32000)),0,10);
 
     // define HTTP POST DATA

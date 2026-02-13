@@ -18,10 +18,10 @@ $lang['MON_THOUSANDS_SEP'] = ',';
 $lang['DATEFORMAT'] = "%B %d, %Y";
 $lang['SKINDATEFORMAT'] = "%d/%m/%Y";
 
-$lang['IMDBSITE'] = "http://www.imdb.com";
+$lang['IMDBSITE'] = "https://www.imdb.com";
 $lang['IMDBURL'] = "$lang[IMDBSITE]/find";
 $lang['IMDBNAME'] = "US IMDb";
-$lang['WIKIURL'] = "http://en.wikipedia.org/wiki/Special:Search/";
+$lang['WIKIURL'] = "https://en.wikipedia.org/wiki/Special:Search/";
 $lang['WIKINAME'] = "Wikipedia";
 
 $lang['CONTRIBUTORS'] = "Profile Contributors";

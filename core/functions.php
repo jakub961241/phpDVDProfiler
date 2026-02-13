@@ -751,7 +751,7 @@ function AcquireAThumbnail($filename) {
 global $getimages, $img_physpath, $createthumbs, $thumbnails;
 
     if (!file_exists($img_physpath.$thumbnails.'/'.$filename) && $getimages == 2) { // if $getimages == 2, try to grab an image from the Invelos server
-        if ($thumb=@file_get_contents('http://www.invelos.com/mpimages/'.$filename[0].$filename[1].'/'.$filename)) {
+        if ($thumb=@file_get_contents('https://www.invelos.com/mpimages/'.$filename[0].$filename[1].'/'.$filename)) {
             if ($handle = fopen($img_physpath.$thumbnails.'/'.$filename, 'wb')) {
                 fwrite($handle, $thumb);
                 fclose($handle);
