@@ -10,12 +10,18 @@ $DontBreakOnBadPNGGDRoutines = false;
 // in siteconfig.php rather than setting them appropriately. This is to prevent having
 // to have butt-loads of "if (isset($var))""-type code ...
 
+// Define constants for commonly used color and icon literals
+define('COLOR_LIGHT_GREEN', '#BDD9A7');
+define('COLOR_DARK_BLUE', '#0000A0');
+define('ICON_ULTRAHD', 'gfx/iconultrahd.png');
+define('ICON_ULTRAHD_JPG', 'gfx/ultrahd.jpg');
+
 $ClassColor[0]  = 'blue';   // #0000FF URL link to main page color
 $ClassColor[1]  = '#ADA9A9';    //
-$ClassColor[2]  = '#BDD9A7';    //
+$ClassColor[2]  = COLOR_LIGHT_GREEN;    //
 $ClassColor[3]  = '#D9E1FF';    //
 $ClassColor[4]  = '#ADC0D3';    //
-$ClassColor[5]  = '#0000A0';    //
+$ClassColor[5]  = COLOR_DARK_BLUE;    //
 $ClassColor[6]  = '#CCFFCC';    //
 $ClassColor[7]  = '#CCFFDD';    //
 $ClassColor[8]  = '#99CC99';    //
@@ -30,17 +36,17 @@ $ClassColor[16] = 'navy';   // #000080 class=Divider border color
 $ClassColor[17] = 'white';  // #FFFFFF class=f1 text color
 $ClassColor[18] = 'black';  // #000000 class=l,o,d,a,u,v,x,y,z1,f2,f2np,f7 text color
 $ClassColor[19] = 'white';  // #FFFFFF class=nav text color
-$ClassColor[20] = '#BDD9A7';    //         class=a,f6,f8,bgl bgcolor
-$ClassColor[21] = '#BDD9A7';    //         class=z2,f3,f3np,f5 bgcolor
+$ClassColor[20] = COLOR_LIGHT_GREEN;    //         class=a,f6,f8,bgl bgcolor
+$ClassColor[21] = COLOR_LIGHT_GREEN;    //         class=z2,f3,f3np,f5 bgcolor
 $ClassColor[22] = 'black';  // #000000 class=z2 text color
-$ClassColor[23] = '#0000A0';    //         class=f3,f3np text color
-$ClassColor[24] = '#0000A0';    //         class=f5,f6 text color
+$ClassColor[23] = COLOR_DARK_BLUE;    //         class=f3,f3np text color
+$ClassColor[24] = COLOR_DARK_BLUE;    //         class=f5,f6 text color
 $ClassColor[25] = 'white';  // #FFFFFF mom_linkBGColor
 $ClassColor[26] = '#CCCCCC';    //         mom_linkOverBGColor
 $ClassColor[27] = 'black';  // #000000 mom_menuBGColor ... was #CCCCCC
 $ClassColor[28] = 'black';  // #000000 mom_hdrFontColor
-$ClassColor[29] = '#BDD9A7';    //         mom_hdrBGColor
-$ClassColor[30] = '#0000A0';    //         mom_barBGColor
+$ClassColor[29] = COLOR_LIGHT_GREEN;    //         mom_hdrBGColor
+$ClassColor[30] = COLOR_DARK_BLUE;    //         mom_barBGColor
 $ClassColor[31] = 'white';  // #FFFFFF mom_barFontColor
 $ClassColor[32] = 'black';  // #000000 class=s text color
 $ClassColor[33] = 'black';  // #000000 class=s1 text color
@@ -67,9 +73,9 @@ $MediaTypes         = array(
     MEDIA_TYPE_HDDVD_DVD    => array('FormatIcon' => 'gfx/iconhddvdpng.png',  'Icon' => 'gfx/hddvd.jpg',  'Banner' => 'gfx/Banner_HDDVD_DVD.png'),
     MEDIA_TYPE_BLURAY   => array('FormatIcon' => 'gfx/iconbluraypng.png', 'Icon' => 'gfx/bluray.jpg', 'Banner' => 'gfx/Banner_BluRay.png'),
     MEDIA_TYPE_BLURAY_DVD   => array('FormatIcon' => 'gfx/iconbluraypng.png', 'Icon' => 'gfx/bluray.jpg', 'Banner' => 'gfx/Banner_BluRayDVD.png'),
-    MEDIA_TYPE_ULTRAHD  => array('FormatIcon' => 'gfx/iconultrahd.png', 'Icon' => 'gfx/ultrahd.jpg', 'Banner' => 'gfx/Banner_UltraHD.png'),
-    MEDIA_TYPE_ULTRAHD_BLURAY   => array('FormatIcon' => 'gfx/iconultrahd.png', 'Icon' => 'gfx/ultrahd.jpg', 'Banner' => 'gfx/Banner_UltraHDBD.png'),
-    MEDIA_TYPE_ULTRAHD_BLURAY_DVD => array('FormatIcon' => 'gfx/iconultrahd.png', 'Icon' => 'gfx/ultrahd.jpg', 'Banner' => 'gfx/Banner_UltraHDBDDVD.png'),
+    MEDIA_TYPE_ULTRAHD  => array('FormatIcon' => ICON_ULTRAHD, 'Icon' => ICON_ULTRAHD_JPG, 'Banner' => 'gfx/Banner_UltraHD.png'),
+    MEDIA_TYPE_ULTRAHD_BLURAY   => array('FormatIcon' => ICON_ULTRAHD, 'Icon' => ICON_ULTRAHD_JPG, 'Banner' => 'gfx/Banner_UltraHDBD.png'),
+    MEDIA_TYPE_ULTRAHD_BLURAY_DVD => array('FormatIcon' => ICON_ULTRAHD, 'Icon' => ICON_ULTRAHD_JPG, 'Banner' => 'gfx/Banner_UltraHDBDDVD.png'),
 
 );
 
@@ -130,11 +136,9 @@ $CollectionsNotInOwned  = array();
 $PrivateNotes       = false;
 $ProfileStatistics  = false;
 $ReportOnMemory     = false;
-//$pscommand        = 'ps -p %%pid%% -o%mem= -orss=';
 $pscommand      = '';
 $SeparateReviews    = true;
 $SecondarySortFollowPrimary = true;
-//$StatisticsOnFrameInit    = false;
 $ShowSQLInPicker    = false;
 $SubmitOldStyle     = false;
 $InitialRightFrame  = '';
@@ -180,7 +184,7 @@ $currencypriority   = array();
 $db_fast_update     = false;
 $dbhost         = 'localhost';
 $dbname         = 'phpdvdprofiler';
-$dbpasswd       = '';
+$dbpass         = '';
 $dbport         = '';
 $dbtype         = 'mysqli';
 $dbuser         = '';
@@ -237,8 +241,9 @@ $jpgrace        = 3;
 $jpgraphlocation    = '../jpgraph/';
 $language_override  = '';
 $lettermeaning      = 0;
-if (($localsiteconfig=@getenv('localsiteconfig')) == '')
+if (($localsiteconfig=@getenv('localsiteconfig')) == '') {
     $localsiteconfig = 'localsiteconfig.php';
+}
 $local_lan      = array();
 $locale         = 'en';
 $localemin      ='0.05';

@@ -91,7 +91,7 @@ foreach ($OriginalVars as $key => $val)
     unset($TheLocalSiteConfig[$key]);
 
 unset($GlobalInits['dbuser']); unset($SiteConfig['dbuser']); unset($TheLocalSiteConfig['dbuser']);
-unset($GlobalInits['dbpasswd']); unset($SiteConfig['dbpasswd']); unset($TheLocalSiteConfig['dbpasswd']);
+unset($GlobalInits['dbpass']); unset($SiteConfig['dbpass']); unset($TheLocalSiteConfig['dbpass']);
 unset($GlobalInits['update_login']); unset($SiteConfig['update_login']); unset($TheLocalSiteConfig['update_login']);
 unset($GlobalInits['update_pass']); unset($SiteConfig['update_pass']); unset($TheLocalSiteConfig['update_pass']);
 

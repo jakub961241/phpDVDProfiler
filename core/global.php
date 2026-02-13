@@ -713,7 +713,7 @@ if ($mobileshow)
 
 $db_schema_version = 'Unknown';
 
-$db = new sql_db($dbhost, $dbuser, $dbpasswd, $dbname, $dbport, false, $debugSQL, true);
+$db = new sql_db($dbhost, $dbuser, $dbpass, $dbname, $dbport, false, $debugSQL, true);
 $db_Errors = $db->GetErrorState();
 
 $collectiontypelist = array();

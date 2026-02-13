@@ -2,16 +2,19 @@
 
 error_reporting(E_ALL);
 defined('IN_SCRIPT') || define('IN_SCRIPT', 1);
-if (!isset($_SERVER['QUERY_STRING']))
+if (!isset($_SERVER['QUERY_STRING'])) {
     $_SERVER['QUERY_STRING'] = '(Null)';
-require_once(__DIR__ . '/../bootstrap.php');
-include_once('global.php');
+}
+require_once __DIR__ . '/../bootstrap.php';
+include_once 'global.php';
 SendNoCacheHeaders('Content-Type: text/html; charset="windows-1252";');
 
-    if (!isset($runtimeslack))
+    if (!isset($runtimeslack)) {
         $runtimeslack = 2;
-    if ($inbrowser)
+    }
+    if ($inbrowser) {
         echo "<pre>";
+    }
     $sql = "SELECT id,title,runningtime,boxchild FROM $DVD_TABLE WHERE collectiontype='owned' AND boxchild <> 0 ORDER BY sorttitle ASC";
     $result = $db->sql_query($sql) or die($db->sql_error());
 

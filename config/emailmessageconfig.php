@@ -3,8 +3,6 @@
 // This file needs to define $LOAN_REMINDER_FROM as the address that you want the email
 // to come from. Replies will also go to this address.
 
-//$LOAN_REMINDER_FROM = "fred@bws.com";
-
 // This file also needs to define the messages that will be sent to the borrowers. If you want
 // only one message sent until the DVD is returned, then define only $message[1]. If you want
 // a series of different messages sent until the return, then define more messages as

@@ -1,8 +1,8 @@
 <?php
 
 defined('IN_SCRIPT') || define('IN_SCRIPT', 1);
-require_once(__DIR__ . '/../bootstrap.php');
-include_once('global.php');
+require_once __DIR__ . '/../bootstrap.php';
+include_once 'global.php';
 SendNoCacheHeaders('Content-Type: text/html; charset="windows-1252";');
 
 if (empty($GLOBALS['IsPrivate'])) {
@@ -57,8 +57,9 @@ function DisplayAResultSet(&$db, $sql) {
             $table = '';
         }
     }
-    if ($table == '' || !in_array($table, $allowed_tables, true))
+    if ($table == '' || !in_array($table, $allowed_tables, true)) {
         $table = $DVD_STATS_TABLE;
+    }
 
     $request = "SELECT * FROM ".$db->sql_escape($table);
     echo "<html><head><title>Dump of table " . htmlspecialchars($table) . "</title></head><body>\n";

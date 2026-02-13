@@ -121,4 +121,4 @@ These instructions don't require creating a new mysql or setting the mysql root
 password. Well thats bad if your collection is available externally. So, if
 your collection is going to be viewable externally, please create yourself a
 new mysql or set the root password. Then update the siteconfig.php with the
-new user/password ($dbuser/$dbpasswd).
+new user/password ($dbuser/$dbpass).

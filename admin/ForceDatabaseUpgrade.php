@@ -1,8 +1,8 @@
 <?php
 
 defined('IN_SCRIPT') || define('IN_SCRIPT', 1);
-require_once(__DIR__ . '/../bootstrap.php');
-include_once('global.php');
+require_once __DIR__ . '/../bootstrap.php';
+include_once 'global.php';
 
 $db->sql_query("UPDATE $DVD_PROPERTIES_TABLE SET value='0.0' WHERE property='db_schema_version'");
 

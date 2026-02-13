@@ -1,8 +1,8 @@
 <?php
 
 defined('IN_SCRIPT') || define('IN_SCRIPT', 1);
-require_once(__DIR__ . '/../bootstrap.php');
-include_once('global.php');
+require_once __DIR__ . '/../bootstrap.php';
+include_once 'global.php';
 SendNoCacheHeaders('Content-Type: text/html; charset="windows-1252";');
 
     $check1 = "Checking for truncated 'uncredited' indicators [searching roles for '(u']";
@@ -20,7 +20,9 @@ SendNoCacheHeaders('Content-Type: text/html; charset="windows-1252";');
     $res = $db->sql_query($sql) or die($db->sql_error());
 
     while ($row = $db->sql_fetchrow($res)) {
-        if ($row['description'] != '') $row['title'] = "$row[title] ($row[description])";
+        if ($row['description'] != '') {
+            $row['title'] = "$row[title] ($row[description])";
+        }
         printf($fmt, $row['title'], $row['fullname'], $row['role']);
     }
     $db->sql_freeresult($res);
@@ -35,7 +37,9 @@ SendNoCacheHeaders('Content-Type: text/html; charset="windows-1252";');
     $res = $db->sql_query($sql) or die($db->sql_error());
 
     while ($row = $db->sql_fetchrow($res)) {
-        if ($row['description'] != '') $row['title'] = "$row[title] ($row[description])";
+        if ($row['description'] != '') {
+            $row['title'] = "$row[title] ($row[description])";
+        }
         printf($fmt, $row['title'], $row['fullname'], $row['role']);
     }
     $db->sql_freeresult($res);

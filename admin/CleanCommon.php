@@ -1,8 +1,8 @@
 <?php
 error_reporting(E_ALL);
 defined('IN_SCRIPT') || define('IN_SCRIPT', 1);
-require_once(__DIR__ . '/../bootstrap.php');
-include_once('global.php');
+require_once __DIR__ . '/../bootstrap.php';
+include_once 'global.php';
 
 function CheckCommonTable($t1, $t2) {
 global $db;

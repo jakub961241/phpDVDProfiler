@@ -71,7 +71,7 @@ unzip -a phpDVDprofiler-v20050102.zip
 
 --------------------------------------------------------------------------------
 
-Edit siteconfig.php and configure $dbuser, $dbpasswd, $update_login, $update_pass.
+Edit siteconfig.php and configure $dbuser, $dbpass, $update_login, $update_pass.
 I set my $dbuser to 'guest'.  The $update vars are the login name and password
 that you need to type in on the web page form when you try to update your
 collection.  Set these to whatever you'd like.

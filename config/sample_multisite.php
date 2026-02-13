@@ -2,8 +2,9 @@
     if (php_sapi_name() == 'cli') {
         return;
     }
-    if (!isset($_SERVER['REQUEST_URI']))
+    if (!isset($_SERVER['REQUEST_URI'])) {
         return;
+    }
     if (substr($_SERVER['REQUEST_URI'], 0, strlen('/phpdvdprofiler.test/')) == '/phpdvdprofiler.test/') {
         $localsiteconfig = 'test_localsiteconfig.php';
     }
@@ -54,7 +55,7 @@
 //    $dbname   - each site needs its own database or alternatively, you could set
 //    $table_prefix - to use different tables in a single database
 //    $dbuser   - for security, each database should use a different access username/password
-//    $dbpasswd - although technically, they could all use the same one. these are real MySQL
+//    $dbpass   - although technically, they could all use the same one. these are real MySQL
 //                users, and so may be restricted by your hosting provider.
 //    $images   - could be all set to the same directory, although then differences between
 //                cover images will be removed (for people who have dpecial covers).

@@ -21,7 +21,7 @@ if (!defined('IN_SCRIPT')) {
 $dbtype         = 'mysqli';
 $dbhost         = 'localhost';
 $dbuser         = '';          // Configure in localsiteconfig.php
-$dbpasswd       = '';          // Configure in localsiteconfig.php
+$dbpass         = '';          // Configure in localsiteconfig.php
 $dbname         = 'phpdvdprofiler';
 $dbport         = '';   // leave blank if on default port
 $table_prefix       = 'DVDPROFILER_';
@@ -125,7 +125,6 @@ $debugon        = true;
 // serves the same purpose in the profiles-by-purchaseplace graph.
 // genremax controls how many segments are in the genre pie chart.
 
-//$usejpgraph       = true;
 $usejpgraph     = false;
 $jpgraphlocation    = '../jpgraph/';
 $localemin      ='0.05';
@@ -177,17 +176,12 @@ $monthspecialprecondition   = '';
 //$localespecialcondition   = "AND purchaseplace <> ''";
 $localespecialcondition     = '';
 
-//$runtimespecialcondition  = "AND boxparent = ''";     // ignore child profiles
-//$runtimespecialcondition  = "AND boxchild = 0";       // ignore parent profiles
 $runtimespecialcondition    = '';
 
-//$shortestspecialcondition = "AND runningtime <> 0";
 $shortestspecialcondition   = '';
 
-//$productionyearspecialcondition = "AND productionyear <> '0'";
 $productionyearspecialcondition = "AND productionyear <> '0'";
 
-//$currencyspecialcondition = "AND purchaseplace <> ''";
 $currencyspecialcondition   = '';
 // $currencypriority is for controlling the cost-by-month graph. $onlycurrencypriority says don't
 // show currencies I don't list here. Otherwise, the graphs cycle through all of the available currencies
@@ -509,9 +503,7 @@ $skinfile       = 'internal';
 // in which the reviews are to be displayed/sorted. The full DVDProfiler graph would correspond to
 // $reviewgraph='FVAE'. DVDProfiler has two additional settings: Default, which is equivalent
 // to $reviewgraph='FV' and one called Simple, which is the same as $reviewgraph='F'.
-//$reviewgraph      = 'FVAE';
 $reviewgraph        = 'FV';
-//$reviewsort       = 'VFA';
 $reviewsort     = 'FV';
 // $SeparateReviews controls whether reviews are shown as an image representing the score, or
 // as a graph, the way that DVDProfiler does it in the windows application

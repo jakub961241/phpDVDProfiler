@@ -162,7 +162,7 @@ if ($step === 1) {
         'dbport' => $_SESSION['inst_dbport'] ?? '',
         'dbname' => $_SESSION['inst_dbname'] ?? 'phpdvdprofiler',
         'dbuser' => $_SESSION['inst_dbuser'] ?? 'root',
-        'dbpasswd' => $_SESSION['inst_dbpasswd'] ?? '',
+        'dbpass' => $_SESSION['inst_dbpass'] ?? '',
         'table_prefix' => $_SESSION['inst_table_prefix'] ?? 'DVDPROFILER_',
         'update_login' => $_SESSION['inst_update_login'] ?? 'admin',
         'update_pass' => $_SESSION['inst_update_pass'] ?? '',
@@ -187,7 +187,7 @@ if ($step === 1) {
     <small class="form-text text-muted">Will be created if it doesn\'t exist.</small></div>
     <div class="row g-2 mb-2">
       <div class="col-6"><label class="form-label">DB Username</label><input type="text" name="dbuser" class="form-control form-control-sm" value="' . htmlspecialchars($defaults['dbuser']) . '"></div>
-      <div class="col-6"><label class="form-label">DB Password</label><input type="password" name="dbpasswd" class="form-control form-control-sm" value="' . htmlspecialchars($defaults['dbpasswd']) . '"></div>
+      <div class="col-6"><label class="form-label">DB Password</label><input type="password" name="dbpass" class="form-control form-control-sm" value="' . htmlspecialchars($defaults['dbpass']) . '"></div>
     </div>
     <div class="mb-0"><label class="form-label">Table Prefix</label><input type="text" name="table_prefix" class="form-control form-control-sm" value="' . htmlspecialchars($defaults['table_prefix']) . '"></div>
     </div></div>
@@ -218,7 +218,7 @@ if ($step === 2) {
     $dbport = trim($_POST['dbport'] ?? '');
     $dbname = trim($_POST['dbname'] ?? 'phpdvdprofiler');
     $dbuser = trim($_POST['dbuser'] ?? 'root');
-    $dbpasswd = $_POST['dbpasswd'] ?? '';
+    $dbpass = $_POST['dbpass'] ?? '';
     $table_prefix = trim($_POST['table_prefix'] ?? 'DVDPROFILER_');
     $update_login = trim($_POST['update_login'] ?? 'admin');
     $update_pass = $_POST['update_pass'] ?? '';
@@ -226,7 +226,7 @@ if ($step === 2) {
     $tmdb_api_key = trim($_POST['tmdb_api_key'] ?? '');
 
     // Save to session for back navigation
-    foreach (['dbhost','dbport','dbname','dbuser','dbpasswd','table_prefix','update_login','update_pass','sitetitle','tmdb_api_key'] as $k) {
+    foreach (['dbhost','dbport','dbname','dbuser','dbpass','table_prefix','update_login','update_pass','sitetitle','tmdb_api_key'] as $k) {
         $_SESSION['inst_' . $k] = $$k;
     }
 
@@ -246,7 +246,7 @@ if ($step === 2) {
 
     // Connect to MySQL server (without database)
     $port = $dbport !== '' ? (int)$dbport : 3306;
-    $conn = @new mysqli($dbhost, $dbuser, $dbpasswd, '', $port);
+    $conn = @new mysqli($dbhost, $dbuser, $dbpass, '', $port);
     if ($conn->connect_error) {
         $_SESSION['inst_error'] = 'Database connection failed: ' . $conn->connect_error;
         header('Location: install.php?step=1');
@@ -332,7 +332,7 @@ if ($step === 2) {
         . "\$dbport = " . var_export($dbport, true) . ";\n"
         . "\$dbname = " . var_export($dbname, true) . ";\n"
         . "\$dbuser = " . var_export($dbuser, true) . ";\n"
-        . "\$dbpasswd = " . var_export($dbpasswd, true) . ";\n"
+        . "\$dbpass = " . var_export($dbpass, true) . ";\n"
         . "\$dbtype = 'mysqli';\n"
         . "\$table_prefix = " . var_export($table_prefix, true) . ";\n"
         . "\n"
