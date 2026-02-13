@@ -20,8 +20,8 @@ if (!defined('IN_SCRIPT')) {
 // This may require the database administrator to GRANT CREATE TEMPORARY TABLES on db.* to dbuser
 $dbtype         = 'mysqli';
 $dbhost         = 'localhost';
-$dbuser         = 'admin';
-$dbpasswd       = 'admin';
+$dbuser         = '';          // Configure in localsiteconfig.php
+$dbpasswd       = '';          // Configure in localsiteconfig.php
 $dbname         = 'phpdvdprofiler';
 $dbport         = '';   // leave blank if on default port
 $table_prefix       = 'DVDPROFILER_';
@@ -198,8 +198,8 @@ $currencyspecialcondition   = '';
 // Force form based login on Apache servers instead of Basic HTTP authentification when updating
 $force_formlogin    = 1;
 // Login name and password for maintenance
-$update_login       = 'admin';
-$update_pass        = 'admin';
+$update_login       = '';          // Configure in localsiteconfig.php
+$update_pass        = '';          // Configure in localsiteconfig.php
 
 // Variables for gallery.php integration
 // $rows is the maximum number of rows of images per page; default = 20
