@@ -1,19 +1,8 @@
 <?php
-defined('IN_SCRIPT') || define('IN_SCRIPT', 1);
-
-require_once(__DIR__ . '/../bootstrap.php');
-include_once('global.php');
-if ($TryToChangeMemoryAndTimeLimits) @ini_set('memory_limit', -1);
+include_once('graph_init.php');
 include_once($jpgraphlocation.'jpgraph.php');
 include_once($jpgraphlocation.'jpgraph_pie.php');
 include_once($jpgraphlocation.'jpgraph_pie3d.php');
-
-if (!isset($graphx) || !$graphx)
-    $graphx = 800 - 40;
-if (!isset($graphy) || !$graphy)
-    $graphy = 'auto';
-if ($graphy == 'auto')
-    $graphy = ($graphx*3)/4;
 
 $numslices = $genremax;
 if ($numslices < 5)

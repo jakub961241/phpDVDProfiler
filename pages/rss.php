@@ -571,8 +571,12 @@ if ($rss_report_leafs) {
         break;
 
     case 'feature':
+        $valid_features = array('sceneaccess','playall','trailer','makingof','commentary','deletedscenes','interviews','outtakes','storyboardcomparisons','photogallery','productionnotes','dvdromcontent','game','multiangle','musicvideos','thxcertified','closedcaptioned');
+        if (!isset($_GET['feature']) || !in_array($_GET['feature'], $valid_features, true)) {
+            exit('Invalid feature specified.');
+        }
         $rss_feeddescription = "DVDs filtered by Feature: ". htmlentities($_GET['feature']);
-        $sql = "SELECT $fieldlist FROM $DVD_TABLE dvd WHERE $RemoveNoRSSTagged collectiontype='owned' $AdultFilter AND feature" . $db->sql_escape($_GET['feature']). "=1 ORDER BY sorttitle";
+        $sql = "SELECT $fieldlist FROM $DVD_TABLE dvd WHERE $RemoveNoRSSTagged collectiontype='owned' $AdultFilter AND feature" . $_GET['feature']. "=1 ORDER BY sorttitle";
         break;
 
     case 'audiocontent':

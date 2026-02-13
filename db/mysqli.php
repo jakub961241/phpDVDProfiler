@@ -156,7 +156,7 @@ class sql_db
                 if ($this->DebugSQL)
                     $this->sql_list .= "\n\t$query";
 
-                if (!empty($_GET['explain']))
+                if (!empty($_GET['explain']) && !empty($GLOBALS['IsPrivate']))
                 {
                     global $starttime;
 
@@ -172,7 +172,7 @@ class sql_db
                     }
                 }
 
-                if (!empty($_GET['explain']))
+                if (!empty($_GET['explain']) && !empty($GLOBALS['IsPrivate']))
                 {
                     $endtime = explode(' ', microtime());
                     $endtime = $endtime[0] + $endtime[1] - $starttime;

@@ -306,7 +306,7 @@ global $getimages, $img_webpathf, $thumbnails;
                 if (isset($ctype) && $ctype !== false) {
                     $where .= " AND $key='$ctype[collectiontype]'";
                 } else if (isset($masterauxcolltype[$value])) {
-                    $where .= " AND auxcolltype LIKE '%/".addslashes($masterauxcolltype[$value])."/%'";
+                    $where .= " AND auxcolltype LIKE '%/".$db->sql_escape($masterauxcolltype[$value])."/%'";
                 } else {
                     // We've received an impossible value, make sure we don't return anything
                     $where .= ' AND 1 = 2';

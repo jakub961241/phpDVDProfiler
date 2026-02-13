@@ -15,8 +15,7 @@ if (!defined('IN_SCRIPT')) {
 include_once('functions.php');
 include_once('version.php');
 
-// Force GET/POST,etc. arguments to _not_ be quoted, and push GET and POST into the namespace
-// Ensure that we can find superglobals
+// Ensure that we can find superglobals (legacy PHP compat)
 if (!isset($_SERVER)) {
     $_ENV = &$HTTP_ENV_VARS;
     $_SERVER = &$HTTP_SERVER_VARS;
@@ -25,17 +24,28 @@ if (!isset($_SERVER)) {
     $_POST = &$HTTP_POST_VARS;
     $_GET = &$HTTP_GET_VARS;
 }
-$EGPCS = array(
-        '_ENV',
-        '_SERVER',
-        '_FILES',
-        '_COOKIE',
-        '_POST',
-        '_GET'
-        );
 
-@extract($_POST);
-@extract($_GET);
+// Safe extraction: only allow known variable names from GET/POST (GET overrides POST)
+$_SAFE_EXTRACT_ALLOWED = [
+    'action','mediaid','collection','sort','order','searchby','searchtext','letter',
+    'lastmedia','startrow','img','mtype','getimages','bannertype','side','QueryNumber',
+    'complete','NoImage','PHP_AUTH_USER','PHP_AUTH_PW','fullname','acttype','sortby',
+    'me','watched','borrowed','user','year','month','lastlist','mostlist','bestlist',
+    'worstlist','dolast','domost','dobest','doworst','maxthumbs','x','y','emailaddr',
+    'graphx','graphy','currency','next','high','low','runtimeslack','ajax',
+    'combo_as_hddvd','auth_login','auth_pass','ct','page','iphone','adult','filter',
+    'noimage','alpha','type','asql','rating','genre','caid','feature','audiocontent',
+    'audioformat','subtitle','studio','loaned','direct','alphasql','InMenu','limit',
+    'pref_login','pref_pass','name',
+];
+foreach ($_SAFE_EXTRACT_ALLOWED as $_key) {
+    if (isset($_POST[$_key]) && !isset($_GET[$_key])) {
+        $$_key = $_POST[$_key];
+    } elseif (isset($_GET[$_key])) {
+        $$_key = $_GET[$_key];
+    }
+}
+unset($_SAFE_EXTRACT_ALLOWED, $_key);
 
 include_once('globalinits.php');
 if (is_readable(BASE_PATH . 'config/multisite.php'))
@@ -228,7 +238,12 @@ if ($allowskins && isset($_COOKIE['skinfile'])) {
     $tmp = rawurldecode($_COOKIE['skinfile']);
     if ($tmp != 'internal') {
         list($skinloc, $skinfile) = explode('/', $tmp);
-        $skinloc = "skins/$skinloc";
+        if (strpos($skinloc, '..') !== false || strpos($skinfile, '..') !== false) {
+            $skinfile = 'internal';
+            $skinloc = '';
+        } else {
+            $skinloc = "skins/$skinloc";
+        }
     }
     else {
         $skinfile = 'internal';
@@ -688,7 +703,7 @@ if (!$inbrowser) {
 $DeleteTemporaryFile = false;       // Flag to see if we need to delete a file created from a zip ...
 if (!isset($PHP_SELF)) {
     if (isset($_SERVER['PHP_SELF']))
-        $PHP_SELF = $_SERVER['PHP_SELF'];
+        $PHP_SELF = htmlspecialchars($_SERVER['PHP_SELF'], ENT_QUOTES, 'UTF-8');
     else
         $PHP_SELF = 'index.php';
 }

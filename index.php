@@ -62,6 +62,11 @@ if ($action == 'GimmeAFrontThumb') {
 }
 
 if ($action == 'phpinfo') {
+    if (!$IsPrivate) {
+        header("HTTP/1.0 403 Forbidden");
+        echo "Access denied.";
+        exit;
+    }
     phpinfo();
     DebugSQL($db, "$action");
     exit;
@@ -206,7 +211,13 @@ if ($action == 'upload_collection' && $_SERVER['REQUEST_METHOD'] == 'POST') {
     $upload_msg = '';
     $upload_ok = false;
 
-    if (isset($_POST['delete_import']) && $_POST['delete_import']) {
+    // Authentication check applies to both delete and upload
+    $badlogin = !isset($_POST['auth_login']) ||
+        ($_POST['auth_login'] != $update_login) || ($_POST['auth_pass'] != $update_pass);
+
+    if ($badlogin) {
+        $upload_msg = $lang['BADLOGIN'];
+    } elseif (isset($_POST['delete_import']) && $_POST['delete_import']) {
         // Delete an uploaded file from import/
         $delFile = BASE_PATH . 'import/' . basename($_POST['delete_import']);
         if (is_file($delFile) && pathinfo($delFile, PATHINFO_EXTENSION) === 'xml') {
@@ -215,12 +226,7 @@ if ($action == 'upload_collection' && $_SERVER['REQUEST_METHOD'] == 'POST') {
             $upload_ok = true;
         }
     } else {
-        // Upload requires authentication
-        $badlogin = !isset($_POST['auth_login']) ||
-            ($_POST['auth_login'] != $update_login) || ($_POST['auth_pass'] != $update_pass);
-        if ($badlogin) {
-            $upload_msg = $lang['BADLOGIN'];
-        } elseif (!isset($_FILES['xmlfile']) || $_FILES['xmlfile']['error'] == UPLOAD_ERR_NO_FILE) {
+        if (!isset($_FILES['xmlfile']) || $_FILES['xmlfile']['error'] == UPLOAD_ERR_NO_FILE) {
             $upload_msg = $lang['UPLOAD']['XMLNOFILE'];
         } elseif ($_FILES['xmlfile']['error'] !== UPLOAD_ERR_OK) {
             $errors = [1=>$lang['UPLOAD']['XMLTOOLARGE_SRV'],2=>$lang['UPLOAD']['XMLTOOLARGE_FRM'],3=>$lang['UPLOAD']['XMLPARTIAL'],6=>$lang['UPLOAD']['XMLNOTMPDIR'],7=>$lang['UPLOAD']['XMLWRITEFAIL']];
@@ -1372,11 +1378,11 @@ case 'all':
     break;
 default:
     if (is_numeric($collection)) {
-        $where = "auxcolltype LIKE '%/".addslashes($masterauxcolltype[$collection])."/%'";
+        $where = "auxcolltype LIKE '%/".$db->sql_escape($masterauxcolltype[$collection])."/%'";
     }
     else if (substr($collection, 0, strlen('FJW-')) == 'FJW-') {
         $collsel = $collectiontypelist[(int)(substr($collection, strlen('FJW-')))];
-        $where = "realcollectiontype='" . addslashes($collsel) . "'";
+        $where = "realcollectiontype='" . $db->sql_escape($collsel) . "'";
         if ($removetabbed)
             $where .= " AND auxcolltype=''";
     }
@@ -1884,8 +1890,8 @@ if ($action == 'menu') {
 // Cookies are used to remember the current sort type and order when when the collection is changed
 // If cookies are disabled, then the only effect is that changing the collection reverts to the
 // default sort type and order.
-    setcookie('cookiesort', $sort);
-    setcookie('cookieorder', $order);
+    setcookie('cookiesort', $sort, ['path' => '/', 'httponly' => true, 'samesite' => 'Lax']);
+    setcookie('cookieorder', $order, ['path' => '/', 'httponly' => true, 'samesite' => 'Lax']);
 
 // removed DISTINCT to repair broken order by
 // added back to support searches finding single entries per profile

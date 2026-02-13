@@ -1,28 +1,11 @@
 <?php
-defined('IN_SCRIPT') || define('IN_SCRIPT', 1);
-
 $originsmin = 0;
 $hideunknown = true;
-require_once(__DIR__ . '/../bootstrap.php');
-include_once('global.php');
-if ($TryToChangeMemoryAndTimeLimits) @ini_set('memory_limit', -1);
+include_once('graph_init.php');
 include_once($jpgraphlocation.'jpgraph.php');
 include_once($jpgraphlocation.'jpgraph_pie.php');
 include_once($jpgraphlocation.'jpgraph_pie3d.php');
 //include_once($jpgraphlocation.'jpgraph_bar.php');
-
-function cmp($a, $b) {
-    if (strtolower($a) == strtolower($b))
-        return(0);
-    return((strtolower($a) < strtolower($b))? -1 : 1);
-}
-
-if (!isset($graphx) || !$graphx)
-    $graphx = 800 - 40;
-if (!isset($graphy) || !$graphy)
-    $graphy = 'auto';
-if ($graphy == 'auto')
-    $graphy = ($graphx*3)/4;
 
 $sql = "SELECT countryoforigin,countryoforigin2,countryoforigin3, sum(1) count FROM $DVD_TABLE WHERE collectiontype='owned' $originspecialcondition GROUP by countryoforigin,countryoforigin2,countryoforigin3";
 $result = $db->sql_query($sql) or die($db->sql_error());

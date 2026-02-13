@@ -2154,10 +2154,10 @@ global $audiospecialcondition, $Highlight_Last_X_PurchaseDates, $UpdateLast, $My
     $answer = $db->sql_fetchrow($result);
     $db->sql_freeresult($result);
     if ($answer === false) {
-        $sql = "INSERT INTO $DVD_PROPERTIES_TABLE SET value='".addslashes($masterauxcolltype)."', property='masterauxcolltypeNoAdult'";
+        $sql = "INSERT INTO $DVD_PROPERTIES_TABLE SET value='".$db->sql_escape($masterauxcolltype)."', property='masterauxcolltypeNoAdult'";
     }
     else {
-        $sql = "UPDATE $DVD_PROPERTIES_TABLE SET value='".addslashes($masterauxcolltype)."' WHERE property='masterauxcolltypeNoAdult'";
+        $sql = "UPDATE $DVD_PROPERTIES_TABLE SET value='".$db->sql_escape($masterauxcolltype)."' WHERE property='masterauxcolltypeNoAdult'";
     }
     $db->sql_query($sql) or die($db->sql_error());
     unset($answer);
@@ -2168,10 +2168,10 @@ global $audiospecialcondition, $Highlight_Last_X_PurchaseDates, $UpdateLast, $My
         $answer = $db->sql_fetchrow($result);
         $db->sql_freeresult($result);
         if ($answer === false) {
-            $sql = "INSERT INTO $DVD_PROPERTIES_TABLE SET value='".addslashes($masterauxcolltype)."', property='masterauxcolltypeAdult'";
+            $sql = "INSERT INTO $DVD_PROPERTIES_TABLE SET value='".$db->sql_escape($masterauxcolltype)."', property='masterauxcolltypeAdult'";
         }
         else {
-            $sql = "UPDATE $DVD_PROPERTIES_TABLE SET value='".addslashes($masterauxcolltype)."' WHERE property='masterauxcolltypeAdult'";
+            $sql = "UPDATE $DVD_PROPERTIES_TABLE SET value='".$db->sql_escape($masterauxcolltype)."' WHERE property='masterauxcolltypeAdult'";
         }
         $db->sql_query($sql) or die($db->sql_error());
         unset($answer);
@@ -2191,10 +2191,10 @@ global $audiospecialcondition, $Highlight_Last_X_PurchaseDates, $UpdateLast, $My
         $answer = $db->sql_fetchrow($result);
         $db->sql_freeresult($result);
         if ($answer === false) {
-            $sql = "INSERT INTO $DVD_PROPERTIES_TABLE SET value='".addslashes($masterauxcolltype)."', property='masterauxcolltypeAdult'";
+            $sql = "INSERT INTO $DVD_PROPERTIES_TABLE SET value='".$db->sql_escape($masterauxcolltype)."', property='masterauxcolltypeAdult'";
         }
         else {
-            $sql = "UPDATE $DVD_PROPERTIES_TABLE SET value='".addslashes($masterauxcolltype)."' WHERE property='masterauxcolltypeAdult'";
+            $sql = "UPDATE $DVD_PROPERTIES_TABLE SET value='".$db->sql_escape($masterauxcolltype)."' WHERE property='masterauxcolltypeAdult'";
         }
         $db->sql_query($sql) or die($db->sql_error());
         unset($answer);

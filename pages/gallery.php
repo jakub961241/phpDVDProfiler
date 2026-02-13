@@ -688,9 +688,9 @@ function get_SQL($page, $dpp = 60){
                         break;
         default:
                     if (is_numeric($ct)) {
-                        $where = "auxcolltype LIKE '%/".addslashes($masterauxcolltype[$ct])."/%'";
+                        $where = "auxcolltype LIKE '%/".$db->sql_escape($masterauxcolltype[$ct])."/%'";
                     } elseif (substr($ct, 0, strlen('FJW-')) == 'FJW-') {
-                        $where = "realcollectiontype = '".addslashes($collectiontypelist[(int)substr($ct, strlen('FJW-'))])."' $noadult";
+                        $where = "realcollectiontype = '".$db->sql_escape($collectiontypelist[(int)substr($ct, strlen('FJW-'))])."' $noadult";
                         if (isset($removetabbed) && $removetabbed)
                             $where .= " AND auxcolltype=''";
                     } else {
@@ -741,7 +741,12 @@ function get_SQL($page, $dpp = 60){
         $sql = "SELECT $base, ca.caid $add FROM $DVD_TABLE dvd, $DVD_ACTOR_TABLE act INNER JOIN $DVD_COMMON_ACTOR_TABLE ca ON ca.caid=act.caid WHERE $where $searchsql GROUP BY dvd.id $orderby $limits";
         break;
     case "lock":
-        $searchsql="AND dvd.id = locks.id AND locks.".strtolower($searchtext)." = 1";
+        $allowed_lock_columns = array('entire', 'covers', 'title', 'mediatype', 'overview', 'regions', 'genres', 'srp', 'studios', 'discinfo', 'cast', 'crew', 'features', 'audio', 'subtitles', 'eastereggs', 'runningtime', 'releasedate', 'productionyear', 'casetype', 'videoformats', 'rating');
+        $lock_column = strtolower($searchtext);
+        if (!in_array($lock_column, $allowed_lock_columns)) {
+            $lock_column = 'entire'; // default to safe value
+        }
+        $searchsql="AND dvd.id = locks.id AND locks.".$lock_column." = 1";
         $sql = "SELECT $base $add FROM $DVD_TABLE dvd, $DVD_LOCKS_TABLE locks WHERE $where $searchsql GROUP BY dvd.id $orderby $limits";
         break;
     case "rating":
@@ -790,7 +795,7 @@ function get_SQL($page, $dpp = 60){
     return ($sql);
 }
 
-if (isset ($_GET['searchtext'])) $_GET['searchtext'] = addslashes($_GET['searchtext']);
+// searchtext escaping is handled below via $db->sql_escape() when $db is available
 if (!isset ($_GET['$printall'])) $_GET['$printall'] = false;
 if (!isset ($_GET['showall'])) $_GET['showall'] = false;
 
@@ -799,6 +804,9 @@ if ($TitlesPerPage == 0)
 else
     $dpp=$TitlesPerPage;
 
+
+    $allowed_sortby = array('sorttitle', 'productionyear', 'released', 'purchasedate', 'collectionnumber', 'runningtime', 'rating', 'reviews', 'timestamp', 'director', 'genres', 'loaninfo', 'loandue', 'wishpriority', 'none');
+    $allowed_order = array('asc', 'desc');
 
     if (!isset($_GET['sort'])){
         switch($defaultsorttype){
@@ -816,18 +824,25 @@ else
     else
         $sortby = $_GET['sort'];
 
+    if (!in_array($sortby, $allowed_sortby))
+        $sortby = 'sorttitle';
+
     if (!isset($_GET['order']))
         $order = 'asc';
     else
         $order = $_GET['order'];
 
-    if (!isset($_GET['searchby']))
+    if (!in_array(strtolower($order), $allowed_order))
+        $order = 'asc';
+
+    $allowed_searchby = ['title','genre','tag','director','credits','actor','lock','rating','locale','studio','loaned',''];
+    if (!isset($_GET['searchby']) || !in_array(strtolower($_GET['searchby']), $allowed_searchby))
         $searchby = '';
     else
         $searchby = $_GET['searchby'];
 
     if (isset($_GET['searchtext']))
-        $searchtext = $_GET['searchtext'];
+        $searchtext = $db->sql_escape($_GET['searchtext']);
     else
         $searchtext = '';
 

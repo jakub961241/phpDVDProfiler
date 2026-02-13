@@ -20,20 +20,22 @@ include_once('global.php');
     SendNoCacheHeaders('Content-Type: text/html; charset="windows-1252";');
 
     if (isset($emailaddr)) {
-        setcookie('emailaddr', $emailaddr);
+        setcookie('emailaddr', $emailaddr, ['path' => '/', 'httponly' => true, 'samesite' => 'Lax']);
+        $safe_name = htmlspecialchars($name, ENT_QUOTES, 'windows-1252');
+        $safe_emailaddr = htmlspecialchars($emailaddr, ENT_QUOTES, 'windows-1252');
         echo<<<EOT
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <html>
 <head>
 <META HTTP-EQUIV="Content-Type" CONTENT="text/html; CHARSET=windows-1252">
-<title>$name</title>
+<title>$safe_name</title>
 <link rel="stylesheet" type="text/css" href="format.css.php">
 </head>
 <body class=f6>
 <center><table width="100%" class=f1><tr><td>$lang[BORROW_PAGE_HEADING] $MY_EMAIL_ADDRESS</td></tr></table></center>
 <BR>
-<center><table width="75%" class=f1 cellpadding=5 border=1><tr><td align=right>$lang[BORROW_TITLE]</td><td align=left>$name</td></tr>
-<tr><td align=right>$lang[BORROW_EMAIL]</td><td align=left>$emailaddr</td></tr></table><br>
+<center><table width="75%" class=f1 cellpadding=5 border=1><tr><td align=right>$lang[BORROW_TITLE]</td><td align=left>$safe_name</td></tr>
+<tr><td align=right>$lang[BORROW_EMAIL]</td><td align=left>$safe_emailaddr</td></tr></table><br>
 </center>
 EOT;
 
@@ -56,12 +58,14 @@ EOT;
     if ($_COOKIE['emailaddr'] != $lang['BORROW_PROMPT_STRING'])
         $onfocus = '';
     $displayEmailaddr = htmlentities($_COOKIE['emailaddr']);
+    $safe_name = htmlspecialchars($name, ENT_QUOTES, 'windows-1252');
+    $safe_mediaid = htmlspecialchars($mediaid, ENT_QUOTES, 'windows-1252');
     echo<<<EOT
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <html>
 <head>
 <META HTTP-EQUIV="Content-Type" CONTENT="text/html; CHARSET=windows-1252">
-<title>$name</title>
+<title>$safe_name</title>
 <link rel="stylesheet" type="text/css" href="format.css.php">
 <script type="text/javascript">
 function isValidEmail(str) {
@@ -81,9 +85,9 @@ function ValidateForm(form) {
 <body class=f6>
 <center><table width="100%" class=f1><tr><td>$lang[BORROW_PAGE_HEADING] $MY_EMAIL_ADDRESS</td></tr></table></center>
 <BR>
-<center><form action=$PHP_SELF method=post onSubmit="return ValidateForm(this);"><table width="75%" class=f1 cellpadding=5 border=1><tr><td align=right>$lang[BORROW_TITLE]</td><td align=left>$name</td></tr>
+<center><form action=$PHP_SELF method=post onSubmit="return ValidateForm(this);"><table width="75%" class=f1 cellpadding=5 border=1><tr><td align=right>$lang[BORROW_TITLE]</td><td align=left>$safe_name</td></tr>
 <tr><td align=right>$lang[BORROW_EMAIL]</td><td align=left><input id=emailaddr $onfocus type=text name=emailaddr value="$displayEmailaddr"></td></tr></table><br>
-<input type=hidden name="mediaid" value="$mediaid"><input type=submit value="$lang[BORROW_SUBMIT_TEXT]"></form></center>
+<input type=hidden name="mediaid" value="$safe_mediaid"><input type=submit value="$lang[BORROW_SUBMIT_TEXT]"></form></center>
 $endbody</html>
 
 EOT;

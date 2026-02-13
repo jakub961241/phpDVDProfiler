@@ -1,20 +1,9 @@
 <?php
-defined('IN_SCRIPT') || define('IN_SCRIPT', 1);
-
 #Version 1.1, 11th July 2006. Added "collectiontype='owned' and " to select.
 
-require_once(__DIR__ . '/../bootstrap.php');
-include_once('global.php');
-if ($TryToChangeMemoryAndTimeLimits) @ini_set('memory_limit', -1);
+include_once('graph_init.php');
 include_once($jpgraphlocation.'jpgraph.php');
 include_once($jpgraphlocation.'jpgraph_bar.php');
-
-if (!isset($graphx) || !$graphx)
-    $graphx = 800 - 40;
-if (!isset($graphy) || !$graphy)
-    $graphy = 'auto';
-if ($graphy == 'auto')
-    $graphy = ($graphx*3)/4;
 
 $sql = $db->sql_query("SELECT date_format(from_unixtime(purchasedate), '%Y/%m') AS month, "
             ."COUNT(title) AS count, SUM(paid) AS price "
