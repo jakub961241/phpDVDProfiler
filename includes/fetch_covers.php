@@ -40,9 +40,12 @@ if (isset($_GET['tmdb_action'])) {
         // Validate $poster_path: must be /alphanumeric+dots+hyphens (e.g. /abc123.jpg)
         if (!preg_match('#^/[a-zA-Z0-9._-]+$#', $poster_path)) { echo json_encode(['error' => 'Invalid poster path']); exit; }
 
-        // Sanitize $mediaid: strip null bytes and reject path traversal characters
-        $cleanId = rtrim($mediaid, "\x00");
-        if ($cleanId === '' || preg_match('#[/\\\\.]#', $cleanId)) { echo json_encode(['error' => 'Invalid media ID']); exit; }
+        // Look up the media ID in the database to avoid constructing paths from user input
+        $row = $db->sql_fetchrow($db->sql_query(
+            "SELECT id FROM {$table_prefix}dvd WHERE id='" . $db->sql_escape($mediaid) . "' LIMIT 1"
+        ));
+        if (!$row) { echo json_encode(['error' => 'Invalid media ID']); exit; }
+        $cleanId = rtrim($row['id'], "\x00");
 
         $filename = $img_physpath . $cleanId . 'f.jpg';
         $thumbname = $img_physpath . $thumbnails . '/' . $cleanId . 'f.jpg';
