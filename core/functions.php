@@ -1149,3 +1149,20 @@ function tmdbLookupImdbId($title, $year = '', $originalTitle = '') {
 
     return '';
 }
+
+function stripQuotes($str) {
+    return str_replace(['"', "'"], '', $str);
+}
+
+function Replace2Lang($matches) {
+global $lang;
+    $matches[1] = stripQuotes($matches[1]);
+    $matches[2] = stripQuotes($matches[2]);
+    return($lang[$matches[1]][$matches[2]]);
+}
+
+function ReplaceLang($matches) {
+global $lang;
+    $matches[1] = stripQuotes($matches[1]);
+    return($lang[$matches[1]]);
+}

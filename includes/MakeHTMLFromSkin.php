@@ -11,21 +11,6 @@
 require_once(__DIR__ . '/../bootstrap.php');
 include_once('lang_'.$_SERVER['argv'][1].'.php');
 
-function Replace2Lang($matches) {
-global $lang;
-    $matches[1] = str_replace("'", '', $matches[1]);
-    $matches[1] = str_replace('"', '', $matches[1]);
-    $matches[2] = str_replace("'", '', $matches[2]);
-    $matches[2] = str_replace('"', '', $matches[2]);
-    return($lang[$matches[1]][$matches[2]]);
-}
-function ReplaceLang($matches) {
-global $lang;
-    $matches[1] = str_replace("'", '', $matches[1]);
-    $matches[1] = str_replace('"', '', $matches[1]);
-    return($lang[$matches[1]]);
-}
-
     $j = file_get_contents($_SERVER['argv'][2]);
 
     $j = preg_replace_callback('/\\$lang\\[(.*)\\]\\[(.*)\\]/U', "Replace2Lang", $j);

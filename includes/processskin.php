@@ -1331,21 +1331,6 @@ global $debugskin;
     return($matches[1].$result);
 }
 
-function Replace2Lang($matches) {
-global $lang;
-    $matches[1] = str_replace("'", '', $matches[1]);
-    $matches[1] = str_replace('"', '', $matches[1]);
-    $matches[2] = str_replace("'", '', $matches[2]);
-    $matches[2] = str_replace('"', '', $matches[2]);
-    return($lang[$matches[1]][$matches[2]]);
-}
-function ReplaceLang($matches) {
-global $lang;
-    $matches[1] = str_replace("'", '', $matches[1]);
-    $matches[1] = str_replace('"', '', $matches[1]);
-    return($lang[$matches[1]]);
-}
-
 if (is_readable("$skinloc/$skinfile")) {
     $skin = file_get_contents("$skinloc/$skinfile");
     $j = preg_replace_callback('/(.*)(<DP )([^>"]*(("[^"]*")[^>"]*)*)(>)(.*)/Ui', "ProcessDP", $skin);

@@ -29,89 +29,69 @@ if ($allowlocale && isset($_COOKIE['locale'])) {
         }
 }
 
-$localeset = 'C';
-$ISO88595 = false;
-switch ($locale) {
-case 'de':
-    $localeset = array(
+// Locale mapping: maps locale codes to their locale variant arrays
+$localeMap = array(
+    'de' => array(
         'de_DE',
         'de_DE.ISO8859-1',
         'de_DE.iso88591',
         'german',
         'deu_DE',
         'ger_DE',
-        );
-    break;
-//case 'dk':            // There doesn't seem to be a locale defined for Danish
-case 'en':
-    $localeset = array(
+    ),
+    'en' => array(
         'en_US',
         'en_US.ISO8859-1',
         'en_US.iso88591',
         'english',
         'eng_US',
-        );
-    break;
-case 'fi':
-    $localeset = array(
+    ),
+    'fi' => array(
         'fi_FI',
         'fi_FI.ISO8859-1',
         'fi_FI.iso88591',
         'finnish',
         'fin_FI',
-        );
-    break;
-case 'fr':
-    $localeset = array(
+    ),
+    'fr' => array(
         'fr_FR',
         'fr_FR.ISO8859-1',
         'fr_FR.iso88591',
         'french',
         'fra_FR',
-        );
-    break;
-case 'no':
-    $localeset = array(
+    ),
+    'no' => array(
         'no_NO',
         'no_NO.ISO8859-1',
         'no_NO.iso88591',
         'norwegian',
         'nor_NO',
-        );
-    break;
-case 'nl':
-    $localeset = array(
+    ),
+    'nl' => array(
         'nl_NL',
         'nl_NL.ISO8859-1',
         'nl_NL.iso88591',
         'dutch',
         'nla_NL',
         'dut_NL',
-        );
-    break;
-case 'ru':
-    $ISO88595 = true;
-    $localeset = array(
+    ),
+    'ru' => array(
         'ru_RU',
         'ru_RU.ISO8859-5',
         'ru_RU.iso88595',
         'Russian_Russia.28595',
         'russian',
         'rus_RU',
-        );
-    break;
-case 'sv':
-    $localeset = array(
+    ),
+    'sv' => array(
         'sv_SE',
         'sv_SE.ISO8859-1',
         'sv_SE.iso88591',
         'swedish',
         'sve_SE',
         'swe_SE',
-        );
-    break;
-case 'cs':
-    $localeset = array(
+    ),
+    'cs' => array(
         'cs_CZ',
         'cs_CZ.UTF-8',
         'cs_CZ.ISO8859-2',
@@ -119,8 +99,24 @@ case 'cs':
         'czech',
         'ces_CZ',
         'cze_CZ',
-        );
-    break;
+    ),
+    // Note: 'dk' (Danish) doesn't have a locale defined
+);
+
+// Default locale fallback
+$localeset = 'C';
+$ISO88595 = false;
+
+// Lookup locale settings
+if (isset($localeMap[$locale])) {
+    $localeset = $localeMap[$locale];
+    // Special handling for Russian locale
+    if ($locale === 'ru') {
+        $ISO88595 = true;
+    }
+} else {
+    // Fall back to English if locale not found
+    $localeset = isset($localeMap['en']) ? $localeMap['en'] : 'C';
 }
 // This requires that the system have the appropriate locale installed
 // PHP pre-4.3.0 will throw a warning with the muliple strings in the array, hence the @
