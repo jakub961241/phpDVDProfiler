@@ -166,10 +166,8 @@ global $AddFormatIcons, $MediaTypes;
         }
         switch ($dvd['builtinmediatype']) {
         case MEDIA_TYPE_DVD:
-            if ($AddFormatIcons == 0 || $formaticon != '') {
-                if ($MediaTypes[MEDIA_TYPE_DVD]['FormatIcon'] != '') {
-                    $formaticon .= '<img src="' . $MediaTypes[MEDIA_TYPE_DVD]['FormatIcon'] . '" alt="" border=0/>';
-                }
+            if (($AddFormatIcons == 0 || $formaticon != '') && $MediaTypes[MEDIA_TYPE_DVD]['FormatIcon'] != '') {
+                $formaticon .= '<img src="' . $MediaTypes[MEDIA_TYPE_DVD]['FormatIcon'] . '" alt="" border=0/>';
             }
             break;
         case MEDIA_TYPE_HDDVD:
@@ -403,40 +401,40 @@ global $DontBreakOnBadPNGGDRoutines;
             $bannerHeightForActualImageWidth = 0;
             $bannerHeightPercent = 0;
         }
-        $ImageWidth = $requestedWidth;
-        $ThumbImageWidth = $requestedWidth;
+        $imageWidth = $requestedWidth;
+        $thumbImageWidth = $requestedWidth;
         if ($requestedHeight == 0) {
-            $ImageHeight = round(($ImageWidth * $OriginalImageHeight) / $OriginalImageWidth);
-            $ThumbImageHeight = $ImageHeight + $bannerHeight;
+            $imageHeight = round(($imageWidth * $OriginalImageHeight) / $OriginalImageWidth);
+            $thumbImageHeight = $imageHeight + $bannerHeight;
         }
         else {
             $ThumbHtoWRatio = $requestedHeight / $requestedWidth;
-            $ThumbImageHeight = $requestedHeight;
+            $thumbImageHeight = $requestedHeight;
             $WhichIsTooLarge = ($OriginalImageHeight + $bannerHeightForActualImageWidth) / $OriginalImageWidth;
             if ($WhichIsTooLarge > $ThumbHtoWRatio) {
 // height must be scaled
-                $ImageHeight = round($ThumbImageHeight / (1 + $bannerHeightPercent));
-                $ImageWidth = round(($ImageHeight * $OriginalImageWidth) / $OriginalImageHeight);
-                $bannerHeight = $ThumbImageHeight - $ImageHeight;       // handle rounding/truncation artifacts
+                $imageHeight = round($thumbImageHeight / (1 + $bannerHeightPercent));
+                $imageWidth = round(($imageHeight * $OriginalImageWidth) / $OriginalImageHeight);
+                $bannerHeight = $thumbImageHeight - $imageHeight;       // handle rounding/truncation artifacts
             }
             else {
 // width must be scaled same as just correct ratio
-                $ImageWidth = $requestedWidth;
-                $ImageHeight = round(($ImageWidth * $OriginalImageHeight) / $OriginalImageWidth);
+                $imageWidth = $requestedWidth;
+                $imageHeight = round(($imageWidth * $OriginalImageHeight) / $OriginalImageWidth);
             }
         }
 
-        $im2 = ImageCreateTrueColor($ThumbImageWidth, $ThumbImageHeight);
+        $im2 = ImageCreateTrueColor($thumbImageWidth, $thumbImageHeight);
 // figure out the offsets within the thumbnail of the images
         $offx = $offy = 0;
-        if ($ImageWidth != $ThumbImageWidth || ($ImageHeight + $bannerHeight) != $ThumbImageHeight) {
+        if ($imageWidth != $thumbImageWidth || ($imageHeight + $bannerHeight) != $thumbImageHeight) {
             if ($bgcolor != '') {
                 $col = ImageColorAllocate($im2, hexdec('0x'.$bgcolor[0].$bgcolor[1]), hexdec('0x'.$bgcolor[2].$bgcolor[3]), hexdec('0x'.$bgcolor[4].$bgcolor[5]));
                 ImageFill($im2, 0, 0, $col);
             }
             if ($center) {
-                $offx = round(($ThumbImageWidth - $ImageWidth) / 2);
-                $offy = round(($ThumbImageHeight - $ImageHeight - $bannerHeight) / 2);
+                $offx = round(($thumbImageWidth - $imageWidth) / 2);
+                $offy = round(($thumbImageHeight - $imageHeight - $bannerHeight) / 2);
             }
         }
 
@@ -451,16 +449,16 @@ global $DontBreakOnBadPNGGDRoutines;
                 return GFX_UNKNOWN;
             }
             $banner = ImageCreateFromPNG($hdbanner);
-            ImageCopyResampled ($im2, $banner, $offx, $offy, 0, 0, $ImageWidth, $bannerHeight, $OriginalBannerWidth, $OriginalBannerHeight);
+            ImageCopyResampled ($im2, $banner, $offx, $offy, 0, 0, $imageWidth, $bannerHeight, $OriginalBannerWidth, $OriginalBannerHeight);
             ImageDestroy($banner);
             $offy += $bannerHeight;
         }
 #       Copy thumbnail into place
         $image = ImageCreateFromJpeg($img_physpath.$filename);
-        if ($OriginalImageWidth == $ImageWidth) {
+        if ($OriginalImageWidth == $imageWidth) {
             ImageCopy($im2, $image, $offx, $offy, 0, 0, $OriginalImageWidth, $OriginalImageHeight);
         } else {
-            ImageCopyResampled ($im2, $image, $offx, $offy, 0, 0, $ImageWidth, $ImageHeight, $OriginalImageWidth, $OriginalImageHeight);
+            ImageCopyResampled ($im2, $image, $offx, $offy, 0, 0, $imageWidth, $imageHeight, $OriginalImageWidth, $OriginalImageHeight);
         }
         ImageDestroy($image);
         if (file_exists($newfilename)) {
@@ -820,10 +818,10 @@ global $img_physpath, $thumbnails;
     if (!file_exists($dir.$name) && $checkthumb) {
         AcquireAThumbnail($name);
     }
-    if (is_readable($dir.$name))
-        return($name);
-//debugLog('$dir='.$dir.', $name='.$name);
-    return('');
+    if (is_readable($dir.$name)) {
+        return $name;
+    }
+    return '';
 }
 
 function find_a_file($id, $isfront, $checkthumb=true) {
