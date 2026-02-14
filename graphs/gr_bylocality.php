@@ -1,8 +1,8 @@
 <?php
-include_once('graph_init.php');
-include_once($jpgraphlocation.'jpgraph.php');
-include_once($jpgraphlocation.'jpgraph_pie.php');
-include_once($jpgraphlocation.'jpgraph_pie3d.php');
+include_once 'graph_init.php';
+include_once $jpgraphlocation.'jpgraph.php';
+include_once $jpgraphlocation.'jpgraph_pie.php';
+include_once $jpgraphlocation.'jpgraph_pie3d.php';
 
 $sql = "SELECT IF (LOCATE('.',id) = '0',0,SUBSTRING(id,locate('.',id)+1,LENGTH(id)-LOCATE('.',id)))+0 as locality, "
     ."SUM(1) AS count FROM $DVD_TABLE WHERE collectiontype='owned' $localespecialcondition "

@@ -1657,12 +1657,14 @@ if ($action == 'main') {
 
     // Build tools menu items
     $toolsMenuItems = "<li><a class=\"dropdown-item\" href=\"#\" onclick=\"loadStatistics();return false;\">$lang[STATISTICS]</a></li>";
-    if (is_readable(BASE_PATH . 'pages/ws.php') && DisplayIfIsPrivateOrAlways($handlewatched))
+    if (is_readable(BASE_PATH . 'pages/ws.php') && DisplayIfIsPrivateOrAlways($handlewatched)) {
         $toolsMenuItems .= "<li><a class=\"dropdown-item\" href=\"#\" onclick=\"loadWatched();return false;\">$lang[WATCHED]</a></li>";
+    }
     if (is_readable(BASE_PATH . 'pages/gallery.php')) {
         $toolsMenuItems .= "<li><a class=\"dropdown-item\" href=\"#\" onclick=\"loadGallery();return false;\">$lang[FRONTGALLERY]</a></li>";
-        if ($BackGallery)
+        if ($BackGallery) {
             $toolsMenuItems .= "<li><a class=\"dropdown-item\" href=\"#\" onclick=\"loadBackGallery();return false;\">$lang[BACKGALLERY]</a></li>";
+        }
     }
     if ($AllowChooser)
         $toolsMenuItems .= "<li><a class=\"dropdown-item\" href=\"#\" onclick=\"loadChooser();return false;\">$lang[CHOOSERSHORT]</a></li>";

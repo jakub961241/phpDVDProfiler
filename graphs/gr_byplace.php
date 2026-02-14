@@ -1,7 +1,7 @@
 <?php
-include_once('graph_init.php');
-include_once($jpgraphlocation.'jpgraph.php');
-include_once($jpgraphlocation.'jpgraph_bar.php');
+include_once 'graph_init.php';
+include_once $jpgraphlocation.'jpgraph.php';
+include_once $jpgraphlocation.'jpgraph_bar.php';
 
 $sql = "SELECT suppliername,COUNT(*) AS count FROM $DVD_TABLE LEFT JOIN $DVD_SUPPLIER_TABLE ON purchaseplace=sid "
     ."WHERE collectiontype='owned' AND suppliername!='Unknown' $placespecialcondition GROUP BY suppliername";

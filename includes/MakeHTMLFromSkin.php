@@ -13,7 +13,7 @@ include_once('lang_'.$_SERVER['argv'][1].'.php');
 
     $j = file_get_contents($_SERVER['argv'][2]);
 
-    $j = preg_replace_callback('/\\$lang\\[(.*)\\]\\[(.*)\\]/U', "Replace2Lang", $j);
-    $j = preg_replace_callback('/\\$lang\\[(.*)\\]/U', "ReplaceLang", $j);
+    $j = preg_replace_callback('/\\$lang\\[(.*)\\]\\[(.*)\\]/U', "replace2Lang", $j);
+    $j = preg_replace_callback('/\\$lang\\[(.*)\\]/U', "replaceLang", $j);
 
     echo $j;

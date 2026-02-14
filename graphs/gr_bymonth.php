@@ -1,7 +1,7 @@
 <?php
-include_once('graph_init.php');
-include_once($jpgraphlocation.'jpgraph.php');
-include_once($jpgraphlocation.'jpgraph_bar.php');
+include_once 'graph_init.php';
+include_once $jpgraphlocation.'jpgraph.php';
+include_once $jpgraphlocation.'jpgraph_bar.php';
 
 // take this to mean that combos should count as the hi-def part or as a dvd
 if (!isset($combo_as_hddvd))

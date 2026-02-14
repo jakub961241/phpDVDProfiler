@@ -1336,8 +1336,8 @@ if (is_readable("$skinloc/$skinfile")) {
     $j = preg_replace_callback('/(.*)(<DP )([^>"]*(("[^"]*")[^>"]*)*)(>)(.*)/Ui', "ProcessDP", $skin);
     unset($skin);
 
-    $j = preg_replace_callback('/\\$lang\\[(.*)\\]\\[(.*)\\]/U', "Replace2Lang", $j);
-    $j = preg_replace_callback('/\\$lang\\[(.*)\\]/U', "ReplaceLang", $j);
+    $j = preg_replace_callback('/\\$lang\\[(.*)\\]\\[(.*)\\]/U', "replace2Lang", $j);
+    $j = preg_replace_callback('/\\$lang\\[(.*)\\]/U', "replaceLang", $j);
 
     $j = preg_replace('|\\.\\.[\\\\/]\\.\\.[\\\\/]skins[\\\\/]temp[\\\\/]|i', $skinloc.'/', $j);
     $j = str_replace('$DPIMAGES.', $skinloc.'/', $j);

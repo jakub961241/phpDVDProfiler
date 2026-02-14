@@ -1,10 +1,10 @@
 <?php
 $originsmin = 0;
 $hideunknown = true;
-include_once('graph_init.php');
-include_once($jpgraphlocation.'jpgraph.php');
-include_once($jpgraphlocation.'jpgraph_bar.php');
-include_once($jpgraphlocation.'jpgraph_log.php');
+include_once 'graph_init.php';
+include_once $jpgraphlocation.'jpgraph.php';
+include_once $jpgraphlocation.'jpgraph_bar.php';
+include_once $jpgraphlocation.'jpgraph_log.php';
 
 function FormatLog($val) {
     return($val);

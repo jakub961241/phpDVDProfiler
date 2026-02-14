@@ -1,9 +1,9 @@
 <?php
 #Version 1.1, 11th July 2006. Added "collectiontype='owned' and " to select.
 
-include_once('graph_init.php');
-include_once($jpgraphlocation.'jpgraph.php');
-include_once($jpgraphlocation.'jpgraph_bar.php');
+include_once 'graph_init.php';
+include_once $jpgraphlocation.'jpgraph.php';
+include_once $jpgraphlocation.'jpgraph_bar.php';
 
 $sql = $db->sql_query("SELECT date_format(from_unixtime(purchasedate), '%Y/%m') AS month, "
             ."COUNT(title) AS count, SUM(paid) AS price "

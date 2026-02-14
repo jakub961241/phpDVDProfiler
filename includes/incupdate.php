@@ -43,7 +43,8 @@ global $db, $lang, $inbrowser, $eoln, $table_prefix, $UpdateLast;
             $cmd .= $tmp;
             if (substr($tmp, strlen($tmp)-1, 1) == ';') {
                 if ($dosub) $cmd = str_replace('DVDPROFILER_', $table_prefix, $cmd);
-                $res = $db->sql_query($cmd) || safeDbDie();
+                $res = $db->sql_query($cmd);
+                if (!$res) { safeDbDie(); }
                 if (is_resource($res)) $db->sql_freeresult($res);
                 $cmd = '';
             }
@@ -88,7 +89,8 @@ global $db, $RatingCallbackResult, $DVD_PROPERTIES_TABLE;
     $now = @filemtime('localities.xod');
     if ($now === false)
         return;
-    $result = $db->sql_query("SELECT value FROM $DVD_PROPERTIES_TABLE WHERE property='Rating~LastLocalitiesUpdateTime'") || safeDbDie();
+    $result = $db->sql_query("SELECT value FROM $DVD_PROPERTIES_TABLE WHERE property='Rating~LastLocalitiesUpdateTime'");
+    if (!$result) { safeDbDie(); }
     $lastmtime = $db->sql_fetchrow($result);
     $db->sql_freeresult($result);
     if ($lastmtime === false || $lastmtime === null || ($lastmtime['value'] < $now)) {
@@ -97,10 +99,10 @@ global $db, $RatingCallbackResult, $DVD_PROPERTIES_TABLE;
         preg_replace_callback('/<([^>]*)>/U', "ProcessLocalitiesCallback", $data);
 
         if ($lastmtime !== false) {
-            $db->sql_query("DELETE FROM $DVD_PROPERTIES_TABLE WHERE property LIKE 'Rating%'") || safeDbDie();
+            if (!$db->sql_query("DELETE FROM $DVD_PROPERTIES_TABLE WHERE property LIKE 'Rating%'")) { safeDbDie(); }
         }
-        $db->sql_query("INSERT INTO $DVD_PROPERTIES_TABLE (property,value) VALUES $RatingCallbackResult") || safeDbDie();
-        $db->sql_query("INSERT INTO $DVD_PROPERTIES_TABLE (property,value) VALUES ('Rating~LastLocalitiesUpdateTime',$now)") || safeDbDie();
+        if (!$db->sql_query("INSERT INTO $DVD_PROPERTIES_TABLE (property,value) VALUES $RatingCallbackResult")) { safeDbDie(); }
+        if (!$db->sql_query("INSERT INTO $DVD_PROPERTIES_TABLE (property,value) VALUES ('Rating~LastLocalitiesUpdateTime',$now)")) { safeDbDie(); }
     }
     return;
 }
@@ -128,7 +130,7 @@ global $db, $TryToChangeMemoryAndTimeLimits, $DVD_STATS_TABLE, $IgnoreCount0Prof
     if ($IgnoreCount0Profiles) $WHERE .= 'AND countas!=0 ';
     $sql = "INSERT INTO $DVD_STATS_TABLE SELECT $Distinct '{$NAME}Adult',$WHATWHEREFROM $WHERE $GROUPORDER";
     if ($TryToChangeMemoryAndTimeLimits) set_time_limit(0);
-    $db->sql_query($sql) || safeDbDie();
+    if (!$db->sql_query($sql)) { safeDbDie(); }
     $ProfileName[$numtimings] = $NAME.'Adult'; $Profile[$numtimings++] = microtime_float()-$t0; $t0 = microtime_float();
 
     if ($noadulttitles)
@@ -137,7 +139,7 @@ global $db, $TryToChangeMemoryAndTimeLimits, $DVD_STATS_TABLE, $IgnoreCount0Prof
         $sql = "INSERT INTO $DVD_STATS_TABLE SELECT $Distinct '{$NAME}NoAdult',$WHATWHEREFROM $WHERE AND isadulttitle=0 $GROUPORDER";
 
     if ($TryToChangeMemoryAndTimeLimits) set_time_limit(0);
-    $db->sql_query($sql) || safeDbDie();
+    if (!$db->sql_query($sql)) { safeDbDie(); }
     $ProfileName[$numtimings] = $NAME.'NoAdult'; $Profile[$numtimings++] = microtime_float()-$t0; $t0 = microtime_float();
     if ($noadulttitles) $numtimings--;
     return;
@@ -191,7 +193,7 @@ class BufferedInsert {
         $retval = 0;
         $templen = strlen($values);
         if ($this->room_left <= $templen) {
-            $this->db->sql_query($this->sql) || safeDbDie();
+            if (!$this->db->sql_query($this->sql)) { safeDbDie(); }
             $this->sql = '';
             $this->room_left = $this->max_packet;
             $retval = 1;
@@ -209,7 +211,7 @@ class BufferedInsert {
 
     function flush() {
         if ($this->sql != '') {
-            $this->db->sql_query($this->sql) || safeDbDie();
+            if (!$this->db->sql_query($this->sql)) { safeDbDie(); }
             return(1);
         }
         return(0);
@@ -390,8 +392,8 @@ function UpdateCommonTableFromMemory(&$common_memory, &$common_stats, $table, $h
 global $db, $max_packet, $lang;
 
     $t0 = microtime_float();
-    $db->sql_query("SET autocommit=0;") || safeDbDie();
-    $db->sql_transaction('begin') || safeDbDie();
+    if (!$db->sql_query("SET autocommit=0;")) { safeDbDie(); }
+    if (!$db->sql_transaction('begin')) { safeDbDie(); }
     if ($common_memory != '') {
         $col_names = '(caid,firstname,middlename,lastname,birthyear,fullname)';
         $bi = new BufferedInsert($db, $max_packet, $table, $col_names);
@@ -440,8 +442,8 @@ global $db, $max_packet, $lang;
         unset($bi);
         unset($credit);
     }
-    $db->sql_transaction('commit') || safeDbDie();
-    $db->sql_query("SET autocommit=1;") || safeDbDie();
+    if (!$db->sql_transaction('commit')) { safeDbDie(); }
+    if (!$db->sql_query("SET autocommit=1;")) { safeDbDie(); }
     $common_stats['amttime'] += microtime_float() - $t0;
 }
 
@@ -451,7 +453,8 @@ global $DVD_COMMON_ACTOR_TABLE, $DVD_COMMON_CREDITS_TABLE;
 
     if ($db_fast_update) {
         if ($which == 'common_actor' && empty($common_actor)) {
-            $res = $db->sql_query("SELECT * FROM $DVD_COMMON_ACTOR_TABLE ORDER BY caid") || safeDbDie();
+            $res = $db->sql_query("SELECT * FROM $DVD_COMMON_ACTOR_TABLE ORDER BY caid");
+            if (!$res) { safeDbDie(); }
             $key = '';
             while ($row = $db->sql_fetch_array($res)) {
                 $key = implode('|', array($row['firstname'], $row['middlename'], $row['lastname'], $row['birthyear']));
@@ -467,7 +470,8 @@ global $DVD_COMMON_ACTOR_TABLE, $DVD_COMMON_CREDITS_TABLE;
         }
 
         if ($which == 'common_credit' && empty($common_credit)) {
-            $res = $db->sql_query("SELECT * FROM $DVD_COMMON_CREDITS_TABLE ORDER BY caid") || safeDbDie();
+            $res = $db->sql_query("SELECT * FROM $DVD_COMMON_CREDITS_TABLE ORDER BY caid");
+            if (!$res) { safeDbDie(); }
             $key = '';
             while ($row = $db->sql_fetch_array($res)) {
                 $key = implode('|', array($row['firstname'], $row['middlename'], $row['lastname'], $row['birthyear']));
@@ -538,7 +542,8 @@ function TrueFalse(&$str) {
 function GetHashs(&$oldhashs) {
 global $db, $DVD_TABLE;
 
-    $result = $db->sql_query("SELECT id,hashprofile,hashnocolid,hashcast,hashcrew FROM $DVD_TABLE") || safeDbDie();
+    $result = $db->sql_query("SELECT id,hashprofile,hashnocolid,hashcast,hashcrew FROM $DVD_TABLE");
+    if (!$result) { safeDbDie(); }
     while ($row = $db->sql_fetchrow($result)) {
         $id = array_shift($row);
         $oldhashs[$id] = $row;
@@ -852,7 +857,8 @@ global $common_actor, $common_actor_stats, $common_credit, $common_credit_stats,
 
     $T0 = microtime_float();
 // Get the current connection ID and stuff it into the DB so that everyone knows we're running
-    $res = $db->sql_query("SELECT CONNECTION_ID() AS Id") || safeDbDie();
+    $res = $db->sql_query("SELECT CONNECTION_ID() AS Id");
+    if (!$res) { safeDbDie(); }
     $row = $db->sql_fetchrow($res);
     $MyConnectionId = $row['Id'];
     $res = $db->sql_query("SELECT value FROM $DVD_PROPERTIES_TABLE WHERE property='CurrentPosition'", 0, true);
@@ -860,7 +866,7 @@ global $common_actor, $common_actor_stats, $common_credit, $common_credit_stats,
     $db->sql_freeresult($res);
     $val = $row != null ? substr($row['value'], 0, strrpos($row['value'], '|')) : null;
     unset($row);
-    $db->sql_query("UPDATE $DVD_PROPERTIES_TABLE SET value='$val|-$MyConnectionId' WHERE property='CurrentPosition'") || safeDbDie();
+    if (!$db->sql_query("UPDATE $DVD_PROPERTIES_TABLE SET value='$val|-$MyConnectionId' WHERE property='CurrentPosition'")) { safeDbDie(); }
 
     if ($inbrowser)
         $tmp = "<div id=\"phpdvd_notice\" style=\"display:none\">200 - $MyConnectionId</div>";
@@ -913,7 +919,8 @@ global $common_actor, $common_actor_stats, $common_credit, $common_credit_stats,
         @ob_flush();
 
 // Find out how long a query we can send to the server ...
-        $result = $db->sql_query("SHOW VARIABLES like 'max_allowed_packet'") || safeDbDie();
+        $result = $db->sql_query("SHOW VARIABLES like 'max_allowed_packet'");
+        if (!$result) { safeDbDie(); }
         $row = $db->sql_fetch_array($result);
         $db->sql_freeresult($result);
         $max_packet = $row['Value'];
@@ -1037,7 +1044,7 @@ global $common_actor, $common_actor_stats, $common_credit, $common_credit_stats,
                     }
                     if ($oldhashs[$id]['hashnocolid'] == $hashs['hashnocolid']) {
 // Only the collection number changed. Update to new id, and walk away.
-                        $db->sql_query("UPDATE $DVD_TABLE SET collectionnumber='$hashs[colid]',hashprofile='$hashs[hashprofile]' WHERE id='$id'") || safeDbDie();
+                        if (!$db->sql_query("UPDATE $DVD_TABLE SET collectionnumber='$hashs[colid]',hashprofile='$hashs[hashprofile]' WHERE id='$id'")) { safeDbDie(); }
                         $newcollnum++;
                     }
                     else {
@@ -1078,7 +1085,7 @@ global $common_actor, $common_actor_stats, $common_credit, $common_credit_stats,
                     @ob_flush();
                 }
                 $WhereInFile = ftell($fh);
-                $db->sql_query("UPDATE $DVD_PROPERTIES_TABLE SET value='$WhereInFile|$currentxmlfile!$currentxmlfilesize|$total|$added|$changed|$newcollnum|$MyConnectionId' WHERE property='CurrentPosition'") || safeDbDie();
+                if (!$db->sql_query("UPDATE $DVD_PROPERTIES_TABLE SET value='$WhereInFile|$currentxmlfile!$currentxmlfilesize|$total|$added|$changed|$newcollnum|$MyConnectionId' WHERE property='CurrentPosition'")) { safeDbDie(); }
             }
             $my_fclose($fh);
         }
@@ -1104,7 +1111,7 @@ global $common_actor, $common_actor_stats, $common_credit, $common_credit_stats,
             unset($common_credit);
         }
 
-        $db->sql_query("UPDATE $DVD_PROPERTIES_TABLE SET value='-1||0|0|0|0|$MyConnectionId' WHERE property='CurrentPosition'") || safeDbDie();
+        if (!$db->sql_query("UPDATE $DVD_PROPERTIES_TABLE SET value='-1||0|0|0|0|$MyConnectionId' WHERE property='CurrentPosition'")) { safeDbDie(); }
     }
 
     if ($UpdateLast['Offset'] < 0) {
@@ -1138,7 +1145,7 @@ global $common_actor, $common_actor_stats, $common_credit, $common_credit_stats,
         UpdateBoxSets();
         modifyTables('ENABLE');
         $ppdelete = TidyPurchasePlace();
-        $db->sql_query("UPDATE $DVD_PROPERTIES_TABLE SET value='-2||0|0|0|0|$MyConnectionId' WHERE property='CurrentPosition'") || safeDbDie();
+        if (!$db->sql_query("UPDATE $DVD_PROPERTIES_TABLE SET value='-2||0|0|0|0|$MyConnectionId' WHERE property='CurrentPosition'")) { safeDbDie(); }
     }
 
     if ($UpdateLast['Offset'] > -3) {
@@ -1164,7 +1171,7 @@ global $common_actor, $common_actor_stats, $common_credit, $common_credit_stats,
             ' + ' . number_format($totaltime-$DatabaseTime, 3, $lang['MON_DECIMAL_POINT'], $lang['MON_THOUSANDS_SEP']) .
             ')' . $eoln;
 
-        $db->sql_query("UPDATE $DVD_PROPERTIES_TABLE SET value='-3||0|0|0|0|$MyConnectionId' WHERE property='CurrentPosition'") || safeDbDie();
+        if (!$db->sql_query("UPDATE $DVD_PROPERTIES_TABLE SET value='-3||0|0|0|0|$MyConnectionId' WHERE property='CurrentPosition'")) { safeDbDie(); }
     }
 
     if ($UpdateLast['Offset'] >= -3) {
@@ -1181,13 +1188,13 @@ global $common_actor, $common_actor_stats, $common_credit, $common_credit_stats,
         }
         unset($IDsChanged);
 
-        $db->sql_query("REPLACE INTO $DVD_PROPERTIES_TABLE SET value='".time()."', property='LastUpdate'") || safeDbDie();
+        if (!$db->sql_query("REPLACE INTO $DVD_PROPERTIES_TABLE SET value='".time()."', property='LastUpdate'")) { safeDbDie(); }
 
         if (is_readable($CustomPostUpdate)) {
             echo "$lang[EXECUTING] $CustomPostUpdate$eoln";
             include_once($CustomPostUpdate);
         }
-        $db->sql_query("UPDATE $DVD_PROPERTIES_TABLE SET value='0||0|0|0|0|$MyConnectionId' WHERE property='CurrentPosition'") || safeDbDie();
+        if (!$db->sql_query("UPDATE $DVD_PROPERTIES_TABLE SET value='0||0|0|0|0|$MyConnectionId' WHERE property='CurrentPosition'")) { safeDbDie(); }
 
         if ($inbrowser)
             echo "<br><br><center><a class=\"URLref\" href=\"$PHP_SELF\" target=\"_top\">$lang[IMPORTCLICK]</a><br></center><div id=\"theend\"></div>$endbody</html>\n";
@@ -1202,12 +1209,14 @@ global $common_actor, $common_actor_stats, $common_credit, $common_credit_stats,
 function TidyPurchasePlace() {
 global $db, $DVD_TABLE, $DVD_SUPPLIER_TABLE;
     $ppdelete = 0;
-    $suppliers = $db->sql_query("SELECT sid FROM $DVD_SUPPLIER_TABLE") || safeDbDie();
+    $suppliers = $db->sql_query("SELECT sid FROM $DVD_SUPPLIER_TABLE");
+    if (!$suppliers) { safeDbDie(); }
     while ($supplierid = $db->sql_fetchrow($suppliers)) {
-        $result = $db->sql_query("SELECT id FROM $DVD_TABLE WHERE purchaseplace='$supplierid[sid]'") || safeDbDie();
+        $result = $db->sql_query("SELECT id FROM $DVD_TABLE WHERE purchaseplace='$supplierid[sid]'");
+        if (!$result) { safeDbDie(); }
         if (!$db->sql_numrows($result)) {
             $ppdelete++;
-            $db->sql_query("DELETE FROM $DVD_SUPPLIER_TABLE where sid = '$supplierid[sid]'") || safeDbDie();
+            if (!$db->sql_query("DELETE FROM $DVD_SUPPLIER_TABLE where sid = '$supplierid[sid]'")) { safeDbDie(); }
         }
     }
     return($ppdelete);
@@ -1223,33 +1232,33 @@ global $DVD_GENRES_TABLE, $DVD_COMMON_ACTOR_TABLE, $DVD_COMMON_CREDITS_TABLE, $D
     if ($id != 'clean out all of the tables') {
         $where = "WHERE id='$id'";
     }
-    $db->sql_query("DELETE FROM $DVD_TABLE $where") || safeDbDie();
+    if (!$db->sql_query("DELETE FROM $DVD_TABLE $where")) { safeDbDie(); }
     if ($castisbad) {
-        $db->sql_query("DELETE FROM $DVD_ACTOR_TABLE $where") || safeDbDie();
+        if (!$db->sql_query("DELETE FROM $DVD_ACTOR_TABLE $where")) { safeDbDie(); }
     }
-    $db->sql_query("DELETE FROM $DVD_EVENTS_TABLE $where") || safeDbDie();
-    $db->sql_query("DELETE FROM $DVD_LOCKS_TABLE $where") || safeDbDie();
-    $db->sql_query("DELETE FROM $DVD_DISCS_TABLE $where") || safeDbDie();
-    $db->sql_query("DELETE FROM $DVD_AUDIO_TABLE $where") || safeDbDie();
-    $db->sql_query("DELETE FROM $DVD_GENRES_TABLE $where") || safeDbDie();
-    $db->sql_query("DELETE FROM $DVD_EXCLUSIONS_TABLE $where") || safeDbDie();
+    if (!$db->sql_query("DELETE FROM $DVD_EVENTS_TABLE $where")) { safeDbDie(); }
+    if (!$db->sql_query("DELETE FROM $DVD_LOCKS_TABLE $where")) { safeDbDie(); }
+    if (!$db->sql_query("DELETE FROM $DVD_DISCS_TABLE $where")) { safeDbDie(); }
+    if (!$db->sql_query("DELETE FROM $DVD_AUDIO_TABLE $where")) { safeDbDie(); }
+    if (!$db->sql_query("DELETE FROM $DVD_GENRES_TABLE $where")) { safeDbDie(); }
+    if (!$db->sql_query("DELETE FROM $DVD_EXCLUSIONS_TABLE $where")) { safeDbDie(); }
     if ($crewisbad) {
-        $db->sql_query("DELETE FROM $DVD_CREDITS_TABLE $where") || safeDbDie();
+        if (!$db->sql_query("DELETE FROM $DVD_CREDITS_TABLE $where")) { safeDbDie(); }
     }
-    $db->sql_query("DELETE FROM $DVD_BOXSET_TABLE $where") || safeDbDie();
-    $db->sql_query("DELETE FROM $DVD_STUDIO_TABLE $where") || safeDbDie();
-    $db->sql_query("DELETE FROM $DVD_LINKS_TABLE $where") || safeDbDie();
-    $db->sql_query("DELETE FROM $DVD_SUBTITLE_TABLE $where") || safeDbDie();
-    $db->sql_query("DELETE FROM $DVD_TAGS_TABLE $where") || safeDbDie();
+    if (!$db->sql_query("DELETE FROM $DVD_BOXSET_TABLE $where")) { safeDbDie(); }
+    if (!$db->sql_query("DELETE FROM $DVD_STUDIO_TABLE $where")) { safeDbDie(); }
+    if (!$db->sql_query("DELETE FROM $DVD_LINKS_TABLE $where")) { safeDbDie(); }
+    if (!$db->sql_query("DELETE FROM $DVD_SUBTITLE_TABLE $where")) { safeDbDie(); }
+    if (!$db->sql_query("DELETE FROM $DVD_TAGS_TABLE $where")) { safeDbDie(); }
     if ($where != '') {
-        $db->sql_query("UPDATE $DVD_TABLE SET boxparent='' WHERE boxparent='$id'") || safeDbDie();
+        if (!$db->sql_query("UPDATE $DVD_TABLE SET boxparent='' WHERE boxparent='$id'")) { safeDbDie(); }
     }
     else {
-        $db->sql_query("DELETE FROM $DVD_SUPPLIER_TABLE") || safeDbDie();
-        $db->sql_query("DELETE FROM $DVD_USERS_TABLE") || safeDbDie();
-        $db->sql_query("DELETE FROM $DVD_COMMON_ACTOR_TABLE WHERE caid>0") || safeDbDie();
-        $db->sql_query("DELETE FROM $DVD_COMMON_CREDITS_TABLE WHERE caid>0") || safeDbDie();
-        $db->sql_query("DELETE FROM $DVD_PROPERTIES_TABLE WHERE property LIKE 'Rating%'") || safeDbDie();
+        if (!$db->sql_query("DELETE FROM $DVD_SUPPLIER_TABLE")) { safeDbDie(); }
+        if (!$db->sql_query("DELETE FROM $DVD_USERS_TABLE")) { safeDbDie(); }
+        if (!$db->sql_query("DELETE FROM $DVD_COMMON_ACTOR_TABLE WHERE caid>0")) { safeDbDie(); }
+        if (!$db->sql_query("DELETE FROM $DVD_COMMON_CREDITS_TABLE WHERE caid>0")) { safeDbDie(); }
+        if (!$db->sql_query("DELETE FROM $DVD_PROPERTIES_TABLE WHERE property LIKE 'Rating%'")) { safeDbDie(); }
     }
 }
 
@@ -1258,7 +1267,8 @@ global $users, $maxuserid, $db, $DVD_USERS_TABLE;
 
     if ($users == '') {
         $users = array();
-        $res = $db->sql_query("SELECT * FROM $DVD_USERS_TABLE ORDER BY uid ASC") || safeDbDie();
+        $res = $db->sql_query("SELECT * FROM $DVD_USERS_TABLE ORDER BY uid ASC");
+        if (!$res) { safeDbDie(); }
         while ($row = $db->sql_fetch_array($res)) {
             $full = "$row[firstname]|$row[lastname]";
             $users[$full] = $row;
@@ -1278,7 +1288,7 @@ global $users, $maxuserid, $db, $DVD_USERS_TABLE;
             $sql = "UPDATE $DVD_USERS_TABLE SET emailaddress='"
                 . $db->sql_escape($emailaddress) . "',phonenumber='"
                 . $db->sql_escape($phonenumber) . "' WHERE uid=$uid";
-            $db->sql_query($sql) || safeDbDie();
+            if (!$db->sql_query($sql)) { safeDbDie(); }
         }
     }
     else {
@@ -1290,7 +1300,7 @@ global $users, $maxuserid, $db, $DVD_USERS_TABLE;
             ."'" . $db->sql_escape($lname) ."',"
             ."'" . $db->sql_escape($emailaddress) ."',"
             ."'" . $db->sql_escape($phonenumber) . "')";
-        $db->sql_query($sql) || safeDbDie();
+        if (!$db->sql_query($sql)) { safeDbDie(); }
     }
     return($uid);
 }
@@ -1324,7 +1334,8 @@ global $common_actor, $common_actor_stats, $common_credit, $common_credit_stats;
         ."' AND middlename='" . $db->sql_escape($mname)
         ."' AND lastname='" . $db->sql_escape($lname)
         ."' AND birthyear='" . $db->sql_escape($birth) . "'";
-    $res = $db->sql_query($sql) || safeDbDie();
+    $res = $db->sql_query($sql);
+    if (!$res) { safeDbDie(); }
     $foundaid = false;
     while ($aid = $db->sql_fetchrow($res)) {
         if ($aid['firstname'] == $fname &&
@@ -1345,7 +1356,7 @@ global $common_actor, $common_actor_stats, $common_credit, $common_credit_stats;
             ."'" . $db->sql_escape($lname) ."',"
             ."'" . $db->sql_escape($birth) ."',"
             ."'" . $db->sql_escape(preg_replace('/\s\s+/', ' ', trim("$fname $mname $lname"))) . "')";
-        $db->sql_query($sql) || safeDbDie();
+        if (!$db->sql_query($sql)) { safeDbDie(); }
         $aid['caid'] = $db->sql_nextid();
     }
     return($aid['caid']);
@@ -1376,8 +1387,8 @@ global $db_schema_version, $AddBannerOnThumbnails;
 // Profile IDs may not be blank
         return(1);
     }
-    $db->sql_query("SET autocommit=0;") || safeDbDie();
-    $db->sql_transaction('begin') || safeDbDie();
+    if (!$db->sql_query("SET autocommit=0;")) { safeDbDie(); }
+    if (!$db->sql_transaction('begin')) { safeDbDie(); }
     if ($delete != 1)   // Don't bother if we've already nuked the entire db ...
         DeleteFromTables($TheProfileID, $hashs['hashcast']!=$oldhashs['hashcast'], $hashs['hashcrew']!=$oldhashs['hashcrew']);
 
@@ -1499,12 +1510,13 @@ global $db_schema_version, $AddBannerOnThumbnails;
 
         while (!$sid) {
                 $xxx = "SELECT sid FROM $DVD_SUPPLIER_TABLE WHERE suppliername='" . $db->sql_escape($suppliername) . "'";
-                $result = $db->sql_query($xxx) || safeDbDie();
+                $result = $db->sql_query($xxx);
+                if (!$result) { safeDbDie(); }
                 $row = $db->sql_fetchrow($result);
                 $sid = $row === null ? false : $row['sid'];
                 if (!$sid) {
                         $sql = "INSERT INTO $DVD_SUPPLIER_TABLE " . $db->sql_build_array('INSERT', $supplier);
-                        $db->sql_query($sql) || safeDbDie();
+                        if (!$db->sql_query($sql)) { safeDbDie(); }
                 }
         }
         unset ($supplier);
@@ -1524,7 +1536,7 @@ global $db_schema_version, $AddBannerOnThumbnails;
             $sql .= "('$TheProfileID','$n','$f')";
         }
         if ($sql != '')
-            $db->sql_query("REPLACE INTO $DVD_TAGS_TABLE (id,name,fullyqualifiedname) VALUES $sql") || safeDbDie();
+            if (!$db->sql_query("REPLACE INTO $DVD_TAGS_TABLE (id,name,fullyqualifiedname) VALUES $sql")) { safeDbDie(); }
         if ($auxcolltype != '')
             $auxcolltype .= '/';
     }
@@ -1537,7 +1549,7 @@ global $db_schema_version, $AddBannerOnThumbnails;
             $sql .= "('$TheProfileID','$c')";
         }
         if ($sql != '')
-            $db->sql_query("REPLACE INTO $DVD_BOXSET_TABLE (id,child) VALUES $sql") || safeDbDie();
+            if (!$db->sql_query("REPLACE INTO $DVD_BOXSET_TABLE (id,child) VALUES $sql")) { safeDbDie(); }
     }
 
     $isadulttitle = 0;
@@ -1555,7 +1567,7 @@ global $db_schema_version, $AddBannerOnThumbnails;
             }
         }
         if ($sql != '')
-            $db->sql_query("REPLACE INTO $DVD_GENRES_TABLE (id,dborder,genre) VALUES $sql") || safeDbDie();
+            if (!$db->sql_query("REPLACE INTO $DVD_GENRES_TABLE (id,dborder,genre) VALUES $sql")) { safeDbDie(); }
     }
 
 // Put any exclusions into a table.
@@ -1567,7 +1579,7 @@ global $db_schema_version, $AddBannerOnThumbnails;
         $f .= ',remoteconnections'; $v .= ',' . TrueFalse($dvd_info['EXCLUSIONS'][0]['REMOTECONNECTIONS'][0]['VALUE']);
         $f .= ',dpopublic';     $v .= ',' . TrueFalse($dvd_info['EXCLUSIONS'][0]['DPOPUBLIC'][0]['VALUE']);
         $f .= ',dpoprivate';        $v .= ',' . TrueFalse($dvd_info['EXCLUSIONS'][0]['DPOPRIVATE'][0]['VALUE']);
-        $db->sql_query("REPLACE INTO $DVD_EXCLUSIONS_TABLE ($f) VALUES ($v)") || safeDbDie();
+        if (!$db->sql_query("REPLACE INTO $DVD_EXCLUSIONS_TABLE ($f) VALUES ($v)")) { safeDbDie(); }
     }
 
 // Put any MyLinks entries into a table.
@@ -1591,10 +1603,11 @@ global $db_schema_version, $AddBannerOnThumbnails;
                 $sortorder = 8000 + $dborder;
             if ($d == '') {
                 $d = $u;
-                if (strncasecmp($d, 'https://', 8) == 0)
+                if (strncasecmp($d, 'https://', 8) == 0) {
                     $d = substr($d, 8);
-                elseif (strncasecmp($d, 'http://', 7) == 0 || strncasecmp($d, 'file://', 7) == 0)
+                } elseif (strncasecmp($d, 'http://', 7) == 0 || strncasecmp($d, 'file://', 7) == 0) {
                     $d = substr($d, 7);
+                }
                 if (strncasecmp($d, 'www.', 4) == 0)
                     $d = substr($d, 4);
                 if (($EOHost=strpos($d, '/')) !== false)
@@ -1604,7 +1617,7 @@ global $db_schema_version, $AddBannerOnThumbnails;
             $sql .= "('$TheProfileID',$sortorder,0,'$u','$d','$c')";
         }
         if ($sql != '')
-            $db->sql_query("REPLACE INTO $DVD_LINKS_TABLE (id,dborder,linktype,url,description,category) VALUES $sql") || safeDbDie();
+            if (!$db->sql_query("REPLACE INTO $DVD_LINKS_TABLE (id,dborder,linktype,url,description,category) VALUES $sql")) { safeDbDie(); }
     }
 
     if (isset($dvd_info['STUDIOS'][0]['STUDIO'])) {
@@ -1617,7 +1630,7 @@ global $db_schema_version, $AddBannerOnThumbnails;
             $sql .= "('$TheProfileID',0,$dborder,'$s')";
         }
         if ($sql != '')
-            $db->sql_query("REPLACE INTO $DVD_STUDIO_TABLE (id,ismediacompany,dborder,studio) VALUES $sql") || safeDbDie();
+            if (!$db->sql_query("REPLACE INTO $DVD_STUDIO_TABLE (id,ismediacompany,dborder,studio) VALUES $sql")) { safeDbDie(); }
     }
     if (isset($dvd_info['MEDIACOMPANIES'][0]['MEDIACOMPANY'])) {
         $dborder = 0;
@@ -1629,10 +1642,10 @@ global $db_schema_version, $AddBannerOnThumbnails;
             $sql .= "('$TheProfileID',1,$dborder,'$s')";
         }
         if ($sql != '')
-            $db->sql_query("REPLACE INTO $DVD_STUDIO_TABLE (id,ismediacompany,dborder,studio) VALUES $sql") || safeDbDie();
+            if (!$db->sql_query("REPLACE INTO $DVD_STUDIO_TABLE (id,ismediacompany,dborder,studio) VALUES $sql")) { safeDbDie(); }
     }
     if (!empty($dvd_info['MEDIAPUBLISHER'][0]['VALUE'])) {
-        $db->sql_query("REPLACE INTO $DVD_STUDIO_TABLE (id,ismediacompany,dborder,studio) VALUES ('$TheProfileID',1,1,'".$dvd_info['MEDIAPUBLISHER'][0]['VALUE']."')") || safeDbDie();
+        if (!$db->sql_query("REPLACE INTO $DVD_STUDIO_TABLE (id,ismediacompany,dborder,studio) VALUES ('$TheProfileID',1,1,'".$dvd_info['MEDIAPUBLISHER'][0]['VALUE']."')")) { safeDbDie(); }
     }
 
     if (isset($dvd_info['SUBTITLES'][0]['SUBTITLE'])) {
@@ -1643,7 +1656,7 @@ global $db_schema_version, $AddBannerOnThumbnails;
             $sql .= "('$TheProfileID','$s')";
         }
         if ($sql != '')
-            $db->sql_query("REPLACE INTO $DVD_SUBTITLE_TABLE (id,subtitle) VALUES $sql") || safeDbDie();
+            if (!$db->sql_query("REPLACE INTO $DVD_SUBTITLE_TABLE (id,subtitle) VALUES $sql")) { safeDbDie(); }
     }
 
     if (isset($dvd_info['EVENTS'][0]['EVENT'])) {
@@ -1664,7 +1677,7 @@ global $db_schema_version, $AddBannerOnThumbnails;
             }
         }
         if ($sql != '')
-            $db->sql_query("REPLACE INTO $DVD_EVENTS_TABLE (id,uid,eventtype,note,timestamp) VALUES $sql") || safeDbDie();
+            if (!$db->sql_query("REPLACE INTO $DVD_EVENTS_TABLE (id,uid,eventtype,note,timestamp) VALUES $sql")) { safeDbDie(); }
         unset($event);
     }
 
@@ -1683,7 +1696,7 @@ global $db_schema_version, $AddBannerOnThumbnails;
                 $sql .= "('$TheProfileID',$dborder,'$c','$f',NULL)";
         }
         if ($sql != '')
-            $db->sql_query("REPLACE INTO $DVD_AUDIO_TABLE (id,dborder,audiocontent,audioformat,audiochannels) VALUES $sql") || safeDbDie();
+            if (!$db->sql_query("REPLACE INTO $DVD_AUDIO_TABLE (id,dborder,audiocontent,audioformat,audiochannels) VALUES $sql")) { safeDbDie(); }
     }
 
     if (isset($dvd_info['DISCS'][0]['DISC'])) {
@@ -1709,7 +1722,7 @@ global $db_schema_version, $AddBannerOnThumbnails;
             $sql .= ')';
 
         }
-        $db->sql_query("REPLACE INTO $DVD_DISCS_TABLE $fields VALUES $sql") || safeDbDie();
+        if (!$db->sql_query("REPLACE INTO $DVD_DISCS_TABLE $fields VALUES $sql")) { safeDbDie(); }
     }
 
     if (isset($dvd_info['LOCKS'][0])) {
@@ -1737,7 +1750,7 @@ global $db_schema_version, $AddBannerOnThumbnails;
         $f .= ',videoformats';      $v .= ',' . TrueFalse($dvd_info['LOCKS'][0]['VIDEOFORMATS'][0]['VALUE']);
         $f .= ',rating';        $v .= ',' . TrueFalse($dvd_info['LOCKS'][0]['RATING'][0]['VALUE']);
         $db->sql_query("DELETE FROM $DVD_LOCKS_TABLE WHERE id='$TheProfileID'");
-        $db->sql_query("INSERT INTO $DVD_LOCKS_TABLE ($f) VALUES ($v)") || safeDbDie();
+        if (!$db->sql_query("INSERT INTO $DVD_LOCKS_TABLE ($f) VALUES ($v)")) { safeDbDie(); }
     }
 
     if ($hashs['hashcast'] != $oldhashs['hashcast']) {
@@ -2046,9 +2059,9 @@ global $db_schema_version, $AddBannerOnThumbnails;
     $db->sql_query("DELETE FROM $DVD_TABLE WHERE id='$TheProfileID'");
     $sql = "INSERT INTO $DVD_TABLE ($f) VALUES ($v)";
 
-    $db->sql_query($sql) || safeDbDie('insert profile');
-    $db->sql_transaction('commit') || safeDbDie();
-    $db->sql_query("SET autocommit=1;") || safeDbDie();
+    if (!$db->sql_query($sql)) { safeDbDie('insert profile'); }
+    if (!$db->sql_transaction('commit')) { safeDbDie(); }
+    if (!$db->sql_query("SET autocommit=1;")) { safeDbDie(); }
     return(0);
 }
 
@@ -2063,19 +2076,22 @@ global $db, $lang, $eoln, $showbadboxsetnames, $DVD_TABLE, $DVD_BOXSET_TABLE, $M
     $lastbadparent = '';
 
 // Find and remove BoxSet entries where the child id isn't in the main table
-    $result = $db->sql_query("SELECT * FROM $DVD_BOXSET_TABLE ORDER BY id") || safeDbDie();
+    $result = $db->sql_query("SELECT * FROM $DVD_BOXSET_TABLE ORDER BY id");
+    if (!$result) { safeDbDie(); }
     while ($pair = $db->sql_fetchrow($result)) {
-        $result1 = $db->sql_query("SELECT COUNT(*) AS numentries FROM $DVD_TABLE WHERE id='$pair[child]'") || safeDbDie();
+        $result1 = $db->sql_query("SELECT COUNT(*) AS numentries FROM $DVD_TABLE WHERE id='$pair[child]'");
+        if (!$result1) { safeDbDie(); }
         $answer = $db->sql_fetchrow($result1);
         $db->sql_freeresult($result1);
         if ($answer['numentries'] == 0) {
-            $db->sql_query("DELETE FROM $DVD_BOXSET_TABLE WHERE id='$pair[id]' AND child='$pair[child]'") || safeDbDie();
+            if (!$db->sql_query("DELETE FROM $DVD_BOXSET_TABLE WHERE id='$pair[id]' AND child='$pair[child]'")) { safeDbDie(); }
             $numbadentries++;
             if ($lastbadparent != $pair['id']) {
                 $lastbadparent = $pair['id'];
                 $numbadsets++;
                 if ($showbadboxsetnames) {
-                    $result1 = $db->sql_query("SELECT title FROM $DVD_TABLE WHERE id='$lastbadparent'") || safeDbDie();
+                    $result1 = $db->sql_query("SELECT title FROM $DVD_TABLE WHERE id='$lastbadparent'");
+                    if (!$result1) { safeDbDie(); }
                     $answer = $db->sql_fetchrow($result1);
                     $db->sql_freeresult($result1);
                     if ($numbadsets == 1)
@@ -2091,22 +2107,25 @@ global $db, $lang, $eoln, $showbadboxsetnames, $DVD_TABLE, $DVD_BOXSET_TABLE, $M
     }
 
 // Update the main table to set the child's parentpointer
-    $result = $db->sql_query("SELECT * FROM $DVD_BOXSET_TABLE") || safeDbDie();
+    $result = $db->sql_query("SELECT * FROM $DVD_BOXSET_TABLE");
+    if (!$result) { safeDbDie(); }
     while ($pair = $db->sql_fetchrow($result)) {
-        $db->sql_query("UPDATE $DVD_TABLE SET boxparent='$pair[id]' WHERE id='$pair[child]'") || safeDbDie();
+        if (!$db->sql_query("UPDATE $DVD_TABLE SET boxparent='$pair[id]' WHERE id='$pair[child]'")) { safeDbDie(); }
     }
     $db->sql_freeresult($result);
 
 // Update the main table so that the box child member reflects the number of children
-    $result = $db->sql_query("SELECT DISTINCT id FROM $DVD_BOXSET_TABLE") || safeDbDie();
+    $result = $db->sql_query("SELECT DISTINCT id FROM $DVD_BOXSET_TABLE");
+    if (!$result) { safeDbDie(); }
     while ($pair = $db->sql_fetchrow($result)) {
         $parent = $pair['id'];
         $numkids = 0;
-        $result1 = $db->sql_query("SELECT COUNT(*) AS numkids FROM $DVD_TABLE d,$DVD_BOXSET_TABLE b WHERE d.id=b.child and b.id='$parent'") || safeDbDie();
+        $result1 = $db->sql_query("SELECT COUNT(*) AS numkids FROM $DVD_TABLE d,$DVD_BOXSET_TABLE b WHERE d.id=b.child and b.id='$parent'");
+        if (!$result1) { safeDbDie(); }
         $answer = $db->sql_fetchrow($result1);
         $db->sql_freeresult($result1);
 
-        $db->sql_query("UPDATE $DVD_TABLE SET boxchild=$answer[numkids] WHERE id='$parent'") || safeDbDie();
+        if (!$db->sql_query("UPDATE $DVD_TABLE SET boxchild=$answer[numkids] WHERE id='$parent'")) { safeDbDie(); }
     }
     $db->sql_freeresult($result);
 }
@@ -2120,7 +2139,8 @@ global $audiospecialcondition, $Highlight_Last_X_PurchaseDates, $UpdateLast, $My
     if (!$MadeAChange && !$force_cleanup)
         return;
 
-    $result = $db->sql_query("SELECT DISTINCT purchasedate FROM $DVD_TABLE ORDER BY purchasedate DESC LIMIT $Highlight_Last_X_PurchaseDates") || safeDbDie();
+    $result = $db->sql_query("SELECT DISTINCT purchasedate FROM $DVD_TABLE ORDER BY purchasedate DESC LIMIT $Highlight_Last_X_PurchaseDates");
+    if (!$result) { safeDbDie(); }
     $thelist = '';
     while ($row = $db->sql_fetchrow($result)) {
         if ($thelist != '') $thelist .= ',';
@@ -2131,13 +2151,14 @@ global $audiospecialcondition, $Highlight_Last_X_PurchaseDates, $UpdateLast, $My
     $db->sql_query("DELETE FROM $DVD_PROPERTIES_TABLE WHERE property='listofpurchasedates'");
     $db->sql_query("INSERT INTO $DVD_PROPERTIES_TABLE (property,value) VALUES ('listofpurchasedates', '$thelist')");
 
-    $db->sql_query("DELETE FROM $DVD_STATS_TABLE") || safeDbDie();
+    if (!$db->sql_query("DELETE FROM $DVD_STATS_TABLE")) { safeDbDie(); }
     $noadulttitles = false;
-    $db->sql_query("UPDATE $DVD_PROPERTIES_TABLE SET value='-2.1||0|0|0|0|$MyConnectionId' WHERE property='CurrentPosition'") || safeDbDie();
+    if (!$db->sql_query("UPDATE $DVD_PROPERTIES_TABLE SET value='-2.1||0|0|0|0|$MyConnectionId' WHERE property='CurrentPosition'")) { safeDbDie(); }
 
     if (TableCopyingSupported()) {
         if ($TryToChangeMemoryAndTimeLimits) set_time_limit(0);
-        $result = $db->sql_query("SELECT COUNT(*) AS num FROM $DVD_TABLE WHERE isadulttitle=1") || safeDbDie();
+        $result = $db->sql_query("SELECT COUNT(*) AS num FROM $DVD_TABLE WHERE isadulttitle=1");
+        if (!$result) { safeDbDie(); }
         $answer = $db->sql_fetchrow($result);
         $db->sql_freeresult($result);
         $noadulttitles = $answer['num'] == 0;
@@ -2148,7 +2169,8 @@ global $audiospecialcondition, $Highlight_Last_X_PurchaseDates, $UpdateLast, $My
     $NOTVTable = '';
     $NOTVQuery = '';
     $tmp = '(';
-    $result = $db->sql_query("SELECT DISTINCT id FROM $DVD_GENRES_TABLE WHERE genre='Television'") || safeDbDie();
+    $result = $db->sql_query("SELECT DISTINCT id FROM $DVD_GENRES_TABLE WHERE genre='Television'");
+    if (!$result) { safeDbDie(); }
     while ($zzz = $db->sql_fetch_array($result)) {
         if ($tmp != '(') $tmp .= ',';
         $tmp .= "'$zzz[id]'";
@@ -2157,12 +2179,13 @@ global $audiospecialcondition, $Highlight_Last_X_PurchaseDates, $UpdateLast, $My
     if ($tmp != '(') {
         $NOTVQuery = " AND d.id NOT IN $tmp)";
     }
-    $db->sql_query("UPDATE $DVD_PROPERTIES_TABLE SET value='-2.2||0|0|0|0|$MyConnectionId' WHERE property='CurrentPosition'") || safeDbDie();
+    if (!$db->sql_query("UPDATE $DVD_PROPERTIES_TABLE SET value='-2.2||0|0|0|0|$MyConnectionId' WHERE property='CurrentPosition'")) { safeDbDie(); }
 
     $t0 = microtime_float(); $numtimings = 0;
 // Create tables including and excluding Adult titles
 
-    $result = $db->sql_query("SELECT DISTINCT auxcolltype FROM $DVD_TABLE") || safeDbDie();
+    $result = $db->sql_query("SELECT DISTINCT auxcolltype FROM $DVD_TABLE");
+    if (!$result) { safeDbDie(); }
     $masterauxcolltype = '';
     while ($row = $db->sql_fetchrow($result)) {
         $masterauxcolltype .= $row['auxcolltype'];
@@ -2172,7 +2195,8 @@ global $audiospecialcondition, $Highlight_Last_X_PurchaseDates, $UpdateLast, $My
     sort($temparray);
     $masterauxcolltype = implode('/', $temparray);
     unset($temparray);
-    $result = $db->sql_query("SELECT value FROM $DVD_PROPERTIES_TABLE WHERE property='masterauxcolltypeNoAdult'") || safeDbDie();
+    $result = $db->sql_query("SELECT value FROM $DVD_PROPERTIES_TABLE WHERE property='masterauxcolltypeNoAdult'");
+    if (!$result) { safeDbDie(); }
     $answer = $db->sql_fetchrow($result);
     $db->sql_freeresult($result);
     if ($answer === false) {
@@ -2181,12 +2205,13 @@ global $audiospecialcondition, $Highlight_Last_X_PurchaseDates, $UpdateLast, $My
     else {
         $sql = "UPDATE $DVD_PROPERTIES_TABLE SET value='".$db->sql_escape($masterauxcolltype)."' WHERE property='masterauxcolltypeNoAdult'";
     }
-    $db->sql_query($sql) || safeDbDie();
+    if (!$db->sql_query($sql)) { safeDbDie(); }
     unset($answer);
     $ProfileName[$numtimings] = 'AuxilliaryCollectionsAdult'; $Profile[$numtimings++] = microtime_float()-$t0; $t0 = microtime_float();
 
     if ($noadulttitles) {
-        $result = $db->sql_query("SELECT value FROM $DVD_PROPERTIES_TABLE WHERE property='masterauxcolltypeAdult'") || safeDbDie();
+        $result = $db->sql_query("SELECT value FROM $DVD_PROPERTIES_TABLE WHERE property='masterauxcolltypeAdult'");
+        if (!$result) { safeDbDie(); }
         $answer = $db->sql_fetchrow($result);
         $db->sql_freeresult($result);
         if ($answer === false) {
@@ -2195,11 +2220,12 @@ global $audiospecialcondition, $Highlight_Last_X_PurchaseDates, $UpdateLast, $My
         else {
             $sql = "UPDATE $DVD_PROPERTIES_TABLE SET value='".$db->sql_escape($masterauxcolltype)."' WHERE property='masterauxcolltypeAdult'";
         }
-        $db->sql_query($sql) || safeDbDie();
+        if (!$db->sql_query($sql)) { safeDbDie(); }
         unset($answer);
     }
     else {
-        $result = $db->sql_query("SELECT DISTINCT auxcolltype FROM $DVD_TABLE WHERE isadulttitle=0") || safeDbDie();
+        $result = $db->sql_query("SELECT DISTINCT auxcolltype FROM $DVD_TABLE WHERE isadulttitle=0");
+        if (!$result) { safeDbDie(); }
         $masterauxcolltype = '';
         while ($row = $db->sql_fetchrow($result)) {
             $masterauxcolltype .= $row['auxcolltype'];
@@ -2209,7 +2235,8 @@ global $audiospecialcondition, $Highlight_Last_X_PurchaseDates, $UpdateLast, $My
         sort($temparray);
         $masterauxcolltype = implode('/', $temparray);
         unset($temparray);
-        $result = $db->sql_query("SELECT value FROM $DVD_PROPERTIES_TABLE WHERE property='masterauxcolltypeAdult'") || safeDbDie();
+        $result = $db->sql_query("SELECT value FROM $DVD_PROPERTIES_TABLE WHERE property='masterauxcolltypeAdult'");
+        if (!$result) { safeDbDie(); }
         $answer = $db->sql_fetchrow($result);
         $db->sql_freeresult($result);
         if ($answer === false) {
@@ -2218,10 +2245,10 @@ global $audiospecialcondition, $Highlight_Last_X_PurchaseDates, $UpdateLast, $My
         else {
             $sql = "UPDATE $DVD_PROPERTIES_TABLE SET value='".$db->sql_escape($masterauxcolltype)."' WHERE property='masterauxcolltypeAdult'";
         }
-        $db->sql_query($sql) || safeDbDie();
+        if (!$db->sql_query($sql)) { safeDbDie(); }
         unset($answer);
     }
-    $db->sql_query("UPDATE $DVD_PROPERTIES_TABLE SET value='-2.3||0|0|0|0|$MyConnectionId' WHERE property='CurrentPosition'") || safeDbDie();
+    if (!$db->sql_query("UPDATE $DVD_PROPERTIES_TABLE SET value='-2.3||0|0|0|0|$MyConnectionId' WHERE property='CurrentPosition'")) { safeDbDie(); }
     $ProfileName[$numtimings] = 'AuxilliaryCollectionsNoAdult'; $Profile[$numtimings++] = microtime_float()-$t0; $t0 = microtime_float();
     if ($noadulttitles) $numtimings--;
 
@@ -2234,7 +2261,7 @@ global $audiospecialcondition, $Highlight_Last_X_PurchaseDates, $UpdateLast, $My
             '',
             $noadulttitles, $ProfileName, $Profile, $numtimings, $t0);
     }
-    $db->sql_query("UPDATE $DVD_PROPERTIES_TABLE SET value='-2.4||0|0|0|0|$MyConnectionId' WHERE property='CurrentPosition'") || safeDbDie();
+    if (!$db->sql_query("UPDATE $DVD_PROPERTIES_TABLE SET value='-2.4||0|0|0|0|$MyConnectionId' WHERE property='CurrentPosition'")) { safeDbDie(); }
 
 // Number of profiles per Audio Format
     DoSomeStats('AudioFormat', false,
@@ -2242,7 +2269,7 @@ global $audiospecialcondition, $Highlight_Last_X_PurchaseDates, $UpdateLast, $My
         "WHERE d.id=a.id AND collectiontype='owned' $audiospecialcondition ",
         "GROUP BY audioformat ORDER BY total DESC",
         $noadulttitles, $ProfileName, $Profile, $numtimings, $t0);
-    $db->sql_query("UPDATE $DVD_PROPERTIES_TABLE SET value='-2.5||0|0|0|0|$MyConnectionId' WHERE property='CurrentPosition'") || safeDbDie();
+    if (!$db->sql_query("UPDATE $DVD_PROPERTIES_TABLE SET value='-2.5||0|0|0|0|$MyConnectionId' WHERE property='CurrentPosition'")) { safeDbDie(); }
 
 // $MaxX profiles with longest running time
     DoSomeStats('LongTime', true,
@@ -2250,7 +2277,7 @@ global $audiospecialcondition, $Highlight_Last_X_PurchaseDates, $UpdateLast, $My
         "WHERE collectiontype='owned' $runtimespecialcondition ",
         "ORDER BY runningtime DESC LIMIT $MaxX",
         $noadulttitles, $ProfileName, $Profile, $numtimings, $t0);
-    $db->sql_query("UPDATE $DVD_PROPERTIES_TABLE SET value='-2.6||0|0|0|0|$MyConnectionId' WHERE property='CurrentPosition'") || safeDbDie();
+    if (!$db->sql_query("UPDATE $DVD_PROPERTIES_TABLE SET value='-2.6||0|0|0|0|$MyConnectionId' WHERE property='CurrentPosition'")) { safeDbDie(); }
 
 // $MaxX profiles with shortest running time
     DoSomeStats('ShortTime', true,
@@ -2258,7 +2285,7 @@ global $audiospecialcondition, $Highlight_Last_X_PurchaseDates, $UpdateLast, $My
         "WHERE collectiontype='owned' $shortestspecialcondition ",
         "ORDER BY runningtime ASC LIMIT $MaxX",
         $noadulttitles, $ProfileName, $Profile, $numtimings, $t0);
-    $db->sql_query("UPDATE $DVD_PROPERTIES_TABLE SET value='-2.7||0|0|0|0|$MyConnectionId' WHERE property='CurrentPosition'") || safeDbDie();
+    if (!$db->sql_query("UPDATE $DVD_PROPERTIES_TABLE SET value='-2.7||0|0|0|0|$MyConnectionId' WHERE property='CurrentPosition'")) { safeDbDie(); }
 
 // $MaxX profiles with longest running time NO TV
     DoSomeStats('LongTimeNOTV', true,
@@ -2266,7 +2293,7 @@ global $audiospecialcondition, $Highlight_Last_X_PurchaseDates, $UpdateLast, $My
         "WHERE collectiontype='owned' $runtimespecialcondition$NOTVQuery ",
         "ORDER BY runningtime DESC LIMIT $MaxX",
         $noadulttitles, $ProfileName, $Profile, $numtimings, $t0);
-    $db->sql_query("UPDATE $DVD_PROPERTIES_TABLE SET value='-2.8||0|0|0|0|$MyConnectionId' WHERE property='CurrentPosition'") || safeDbDie();
+    if (!$db->sql_query("UPDATE $DVD_PROPERTIES_TABLE SET value='-2.8||0|0|0|0|$MyConnectionId' WHERE property='CurrentPosition'")) { safeDbDie(); }
 
 // $MaxX profiles with shortest running time NO TV
     DoSomeStats('ShortTimeNOTV', true,
@@ -2274,7 +2301,7 @@ global $audiospecialcondition, $Highlight_Last_X_PurchaseDates, $UpdateLast, $My
         "WHERE collectiontype='owned' $shortestspecialcondition$NOTVQuery ",
         "ORDER BY runningtime ASC LIMIT $MaxX",
         $noadulttitles, $ProfileName, $Profile, $numtimings, $t0);
-    $db->sql_query("UPDATE $DVD_PROPERTIES_TABLE SET value='-2.9||0|0|0|0|$MyConnectionId' WHERE property='CurrentPosition'") || safeDbDie();
+    if (!$db->sql_query("UPDATE $DVD_PROPERTIES_TABLE SET value='-2.9||0|0|0|0|$MyConnectionId' WHERE property='CurrentPosition'")) { safeDbDie(); }
 
     if ($usetemptable) {
         $sql = "CREATE TEMPORARY TABLE TEMP_ACTORS ("
@@ -2288,12 +2315,12 @@ global $audiospecialcondition, $Highlight_Last_X_PurchaseDates, $UpdateLast, $My
             ."countas smallint, "
             ."KEY(id), KEY(caid)"
             .");";
-        $db->sql_query($sql) || safeDbDie();
+        if (!$db->sql_query($sql)) { safeDbDie(); }
 // this needs to be looked at
         $sql = "INSERT IGNORE INTO TEMP_ACTORS SELECT a.id,caid,if(originaltitle != '', originaltitle, title),voice,uncredited,boxparent,isadulttitle,countas FROM $DVD_ACTOR_TABLE a,$DVD_TABLE d "
             ."WHERE a.id=d.id AND caid>0 AND collectiontype='owned'";
-        $db->sql_query($sql) || safeDbDie();
-        $db->sql_query("UPDATE $DVD_PROPERTIES_TABLE SET value='-2.10||0|0|0|0|$MyConnectionId' WHERE property='CurrentPosition'") || safeDbDie();
+        if (!$db->sql_query($sql)) { safeDbDie(); }
+        if (!$db->sql_query("UPDATE $DVD_PROPERTIES_TABLE SET value='-2.10||0|0|0|0|$MyConnectionId' WHERE property='CurrentPosition'")) { safeDbDie(); }
         $ProfileName[$numtimings] = 'Actors Setup'; $Profile[$numtimings++] = microtime_float()-$t0; $t0 = microtime_float();
 
 // $MaxX most collected Actors
@@ -2302,7 +2329,7 @@ global $audiospecialcondition, $Highlight_Last_X_PurchaseDates, $UpdateLast, $My
             "WHERE 1 ",
             "GROUP BY caid ORDER BY times DESC LIMIT $MaxX",
             $noadulttitles, $ProfileName, $Profile, $numtimings, $t0);
-        $db->sql_query("UPDATE $DVD_PROPERTIES_TABLE SET value='-2.11||0|0|0|0|$MyConnectionId' WHERE property='CurrentPosition'") || safeDbDie();
+        if (!$db->sql_query("UPDATE $DVD_PROPERTIES_TABLE SET value='-2.11||0|0|0|0|$MyConnectionId' WHERE property='CurrentPosition'")) { safeDbDie(); }
 
 // $MaxX most collected Actors excluding voice-only parts
         DoSomeStats('ActorsNV', false,
@@ -2310,7 +2337,7 @@ global $audiospecialcondition, $Highlight_Last_X_PurchaseDates, $UpdateLast, $My
             "WHERE voice=0 ",
             "GROUP BY caid ORDER BY times DESC LIMIT $MaxX",
             $noadulttitles, $ProfileName, $Profile, $numtimings, $t0);
-        $db->sql_query("UPDATE $DVD_PROPERTIES_TABLE SET value='-2.12||0|0|0|0|$MyConnectionId' WHERE property='CurrentPosition'") || safeDbDie();
+        if (!$db->sql_query("UPDATE $DVD_PROPERTIES_TABLE SET value='-2.12||0|0|0|0|$MyConnectionId' WHERE property='CurrentPosition'")) { safeDbDie(); }
 
 /*********************************
 // $MaxX most collected Actors counting BoxSets as 1
@@ -2334,7 +2361,7 @@ global $audiospecialcondition, $Highlight_Last_X_PurchaseDates, $UpdateLast, $My
             "WHERE 1$NOTVQuery ",
             "GROUP BY caid ORDER BY times DESC LIMIT $MaxX",
             $noadulttitles, $ProfileName, $Profile, $numtimings, $t0);
-        $db->sql_query("UPDATE $DVD_PROPERTIES_TABLE SET value='-2.13||0|0|0|0|$MyConnectionId' WHERE property='CurrentPosition'") || safeDbDie();
+        if (!$db->sql_query("UPDATE $DVD_PROPERTIES_TABLE SET value='-2.13||0|0|0|0|$MyConnectionId' WHERE property='CurrentPosition'")) { safeDbDie(); }
 
 // $MaxX most collected Actors excluding voice-only parts
         DoSomeStats('ActorsNVNOTV', false,
@@ -2342,7 +2369,7 @@ global $audiospecialcondition, $Highlight_Last_X_PurchaseDates, $UpdateLast, $My
             "WHERE voice=0$NOTVQuery ",
             "GROUP BY caid ORDER BY times DESC LIMIT $MaxX",
             $noadulttitles, $ProfileName, $Profile, $numtimings, $t0);
-        $db->sql_query("UPDATE $DVD_PROPERTIES_TABLE SET value='-2.14||0|0|0|0|$MyConnectionId' WHERE property='CurrentPosition'") || safeDbDie();
+        if (!$db->sql_query("UPDATE $DVD_PROPERTIES_TABLE SET value='-2.14||0|0|0|0|$MyConnectionId' WHERE property='CurrentPosition'")) { safeDbDie(); }
 
 /*********************************
 // $MaxX most collected Actors counting BoxSets as 1 NO TV
@@ -2366,7 +2393,7 @@ global $audiospecialcondition, $Highlight_Last_X_PurchaseDates, $UpdateLast, $My
             "WHERE 1 ",
             "GROUP BY caid ORDER BY times DESC LIMIT $MaxX",
             $noadulttitles, $ProfileName, $Profile, $numtimings, $t0);
-        $db->sql_query("UPDATE $DVD_PROPERTIES_TABLE SET value='-2.15||0|0|0|0|$MyConnectionId' WHERE property='CurrentPosition'") || safeDbDie();
+        if (!$db->sql_query("UPDATE $DVD_PROPERTIES_TABLE SET value='-2.15||0|0|0|0|$MyConnectionId' WHERE property='CurrentPosition'")) { safeDbDie(); }
 
 // $MaxX most collected Actors OriginalTitle NO TV
         DoSomeStats('ActorsORNOTV', false,
@@ -2374,7 +2401,7 @@ global $audiospecialcondition, $Highlight_Last_X_PurchaseDates, $UpdateLast, $My
             "WHERE 1$NOTVQuery ",
             "GROUP BY caid ORDER BY times DESC LIMIT $MaxX",
             $noadulttitles, $ProfileName, $Profile, $numtimings, $t0);
-        $db->sql_query("UPDATE $DVD_PROPERTIES_TABLE SET value='-2.16||0|0|0|0|$MyConnectionId' WHERE property='CurrentPosition'") || safeDbDie();
+        if (!$db->sql_query("UPDATE $DVD_PROPERTIES_TABLE SET value='-2.16||0|0|0|0|$MyConnectionId' WHERE property='CurrentPosition'")) { safeDbDie(); }
 
     }
     else {
@@ -2384,7 +2411,7 @@ global $audiospecialcondition, $Highlight_Last_X_PurchaseDates, $UpdateLast, $My
             "WHERE a.id=d.id AND caid>0 AND collectiontype='owned' ",
             "GROUP BY caid ORDER BY times DESC LIMIT $MaxX",
             $noadulttitles, $ProfileName, $Profile, $numtimings, $t0);
-        $db->sql_query("UPDATE $DVD_PROPERTIES_TABLE SET value='-2.17||0|0|0|0|$MyConnectionId' WHERE property='CurrentPosition'") || safeDbDie();
+        if (!$db->sql_query("UPDATE $DVD_PROPERTIES_TABLE SET value='-2.17||0|0|0|0|$MyConnectionId' WHERE property='CurrentPosition'")) { safeDbDie(); }
 
 // $MaxX most collected Actors excluding voice-only parts
         DoSomeStats('ActorsNV', false,
@@ -2392,7 +2419,7 @@ global $audiospecialcondition, $Highlight_Last_X_PurchaseDates, $UpdateLast, $My
             "WHERE a.id=d.id AND caid>0 AND collectiontype='owned' AND voice=0 ",
             "GROUP BY caid ORDER BY times DESC LIMIT $MaxX",
             $noadulttitles, $ProfileName, $Profile, $numtimings, $t0);
-        $db->sql_query("UPDATE $DVD_PROPERTIES_TABLE SET value='-2.18||0|0|0|0|$MyConnectionId' WHERE property='CurrentPosition'") || safeDbDie();
+        if (!$db->sql_query("UPDATE $DVD_PROPERTIES_TABLE SET value='-2.18||0|0|0|0|$MyConnectionId' WHERE property='CurrentPosition'")) { safeDbDie(); }
 
 /************************************
 // $MaxX most collected Actors counting BoxSets as 1
@@ -2416,7 +2443,7 @@ global $audiospecialcondition, $Highlight_Last_X_PurchaseDates, $UpdateLast, $My
             "WHERE a.id=d.id AND caid>0 AND collectiontype='owned'$NOTVQuery ",
             "GROUP BY caid ORDER BY times DESC LIMIT $MaxX",
             $noadulttitles, $ProfileName, $Profile, $numtimings, $t0);
-        $db->sql_query("UPDATE $DVD_PROPERTIES_TABLE SET value='-2.19||0|0|0|0|$MyConnectionId' WHERE property='CurrentPosition'") || safeDbDie();
+        if (!$db->sql_query("UPDATE $DVD_PROPERTIES_TABLE SET value='-2.19||0|0|0|0|$MyConnectionId' WHERE property='CurrentPosition'")) { safeDbDie(); }
 
 // $MaxX most collected Actors excluding voice-only parts NO TV
         DoSomeStats('ActorsNVNOTV', false,
@@ -2424,7 +2451,7 @@ global $audiospecialcondition, $Highlight_Last_X_PurchaseDates, $UpdateLast, $My
             "WHERE a.id=d.id AND caid>0 AND collectiontype='owned' AND voice=0$NOTVQuery ",
             "GROUP BY caid ORDER BY times DESC LIMIT $MaxX",
             $noadulttitles, $ProfileName, $Profile, $numtimings, $t0);
-        $db->sql_query("UPDATE $DVD_PROPERTIES_TABLE SET value='-2.20||0|0|0|0|$MyConnectionId' WHERE property='CurrentPosition'") || safeDbDie();
+        if (!$db->sql_query("UPDATE $DVD_PROPERTIES_TABLE SET value='-2.20||0|0|0|0|$MyConnectionId' WHERE property='CurrentPosition'")) { safeDbDie(); }
 
 /************************************
 // $MaxX most collected Actors counting BoxSets as 1 NO TV
@@ -2448,7 +2475,7 @@ global $audiospecialcondition, $Highlight_Last_X_PurchaseDates, $UpdateLast, $My
             "WHERE a.id=d.id AND caid>0 AND collectiontype='owned' ",
             "GROUP BY caid ORDER BY times DESC LIMIT $MaxX",
             $noadulttitles, $ProfileName, $Profile, $numtimings, $t0);
-        $db->sql_query("UPDATE $DVD_PROPERTIES_TABLE SET value='-2.21||0|0|0|0|$MyConnectionId' WHERE property='CurrentPosition'") || safeDbDie();
+        if (!$db->sql_query("UPDATE $DVD_PROPERTIES_TABLE SET value='-2.21||0|0|0|0|$MyConnectionId' WHERE property='CurrentPosition'")) { safeDbDie(); }
 
 // $MaxX most collected Actors OriginalTitle NO TV
         DoSomeStats('ActorsORNOTV', false,
@@ -2456,7 +2483,7 @@ global $audiospecialcondition, $Highlight_Last_X_PurchaseDates, $UpdateLast, $My
             "WHERE a.id=d.id AND caid>0 AND collectiontype='owned'$NOTVQuery ",
             "GROUP BY caid ORDER BY times DESC LIMIT $MaxX",
             $noadulttitles, $ProfileName, $Profile, $numtimings, $t0);
-        $db->sql_query("UPDATE $DVD_PROPERTIES_TABLE SET value='-2.22||0|0|0|0|$MyConnectionId' WHERE property='CurrentPosition'") || safeDbDie();
+        if (!$db->sql_query("UPDATE $DVD_PROPERTIES_TABLE SET value='-2.22||0|0|0|0|$MyConnectionId' WHERE property='CurrentPosition'")) { safeDbDie(); }
 
     }
 
@@ -2466,7 +2493,7 @@ global $audiospecialcondition, $Highlight_Last_X_PurchaseDates, $UpdateLast, $My
         "WHERE a.id=d.id AND collectiontype='owned' AND credittype='direction' ",
         "GROUP BY caid ORDER BY times DESC LIMIT $MaxX",
         $noadulttitles, $ProfileName, $Profile, $numtimings, $t0);
-    $db->sql_query("UPDATE $DVD_PROPERTIES_TABLE SET value='-2.23||0|0|0|0|$MyConnectionId' WHERE property='CurrentPosition'") || safeDbDie();
+    if (!$db->sql_query("UPDATE $DVD_PROPERTIES_TABLE SET value='-2.23||0|0|0|0|$MyConnectionId' WHERE property='CurrentPosition'")) { safeDbDie(); }
 
 /*************************************
 // $MaxX most collected Directors counting BoxSets as 1
@@ -2483,7 +2510,7 @@ global $audiospecialcondition, $Highlight_Last_X_PurchaseDates, $UpdateLast, $My
         "WHERE a.id=d.id AND collectiontype='owned' AND credittype='writing' ",
         "GROUP BY caid ORDER BY times DESC LIMIT $MaxX",
         $noadulttitles, $ProfileName, $Profile, $numtimings, $t0);
-    $db->sql_query("UPDATE $DVD_PROPERTIES_TABLE SET value='-2.24||0|0|0|0|$MyConnectionId' WHERE property='CurrentPosition'") || safeDbDie();
+    if (!$db->sql_query("UPDATE $DVD_PROPERTIES_TABLE SET value='-2.24||0|0|0|0|$MyConnectionId' WHERE property='CurrentPosition'")) { safeDbDie(); }
 
 /****************************************
 // $MaxX most collected Writers counting BoxSets as 1
@@ -2500,7 +2527,7 @@ global $audiospecialcondition, $Highlight_Last_X_PurchaseDates, $UpdateLast, $My
         "WHERE a.id=d.id AND collectiontype='owned' AND credittype='direction'$NOTVQuery ",
         "GROUP BY caid ORDER BY times DESC LIMIT $MaxX",
         $noadulttitles, $ProfileName, $Profile, $numtimings, $t0);
-    $db->sql_query("UPDATE $DVD_PROPERTIES_TABLE SET value='-2.25||0|0|0|0|$MyConnectionId' WHERE property='CurrentPosition'") || safeDbDie();
+    if (!$db->sql_query("UPDATE $DVD_PROPERTIES_TABLE SET value='-2.25||0|0|0|0|$MyConnectionId' WHERE property='CurrentPosition'")) { safeDbDie(); }
 
 /*************************************
 // $MaxX most collected Directors counting BoxSets as 1 NO TV
@@ -2517,7 +2544,7 @@ global $audiospecialcondition, $Highlight_Last_X_PurchaseDates, $UpdateLast, $My
         "WHERE a.id=d.id AND collectiontype='owned' AND credittype='writing'$NOTVQuery ",
         "GROUP BY caid ORDER BY times DESC LIMIT $MaxX",
         $noadulttitles, $ProfileName, $Profile, $numtimings, $t0);
-    $db->sql_query("UPDATE $DVD_PROPERTIES_TABLE SET value='-2.26||0|0|0|0|$MyConnectionId' WHERE property='CurrentPosition'") || safeDbDie();
+    if (!$db->sql_query("UPDATE $DVD_PROPERTIES_TABLE SET value='-2.26||0|0|0|0|$MyConnectionId' WHERE property='CurrentPosition'")) { safeDbDie(); }
 
 /****************************************
 // $MaxX most collected Writers counting BoxSets as 1 NO TV
@@ -2534,7 +2561,8 @@ global $audiospecialcondition, $Highlight_Last_X_PurchaseDates, $UpdateLast, $My
 //   same currency. If they are not, then these results are incorrect. A more correct way to do this is once for
 //   each of the currencies paid ... a fair bit of work i'm not interested in doing at the moment
     if ($TryToChangeMemoryAndTimeLimits) set_time_limit(0);
-    $result = $db->sql_query("SELECT DISTINCT purchasepricecurrencyid AS ppci FROM $DVD_TABLE WHERE collectiontype='owned'") || safeDbDie();
+    $result = $db->sql_query("SELECT DISTINCT purchasepricecurrencyid AS ppci FROM $DVD_TABLE WHERE collectiontype='owned'");
+    if (!$result) { safeDbDie(); }
     while ($ppcis = $db->sql_fetchrow($result)) {
         DoSomeStats("$ppcis[ppci]PricePaid", false,
             "title,purchasepricecurrencyid,id,paid*1000 FROM $DVD_TABLE ",
@@ -2543,7 +2571,7 @@ global $audiospecialcondition, $Highlight_Last_X_PurchaseDates, $UpdateLast, $My
             $noadulttitles, $ProfileName, $Profile, $numtimings, $t0);
     }
     $db->sql_freeresult($result);
-    $db->sql_query("UPDATE $DVD_PROPERTIES_TABLE SET value='-2.27||0|0|0|0|$MyConnectionId' WHERE property='CurrentPosition'") || safeDbDie();
+    if (!$db->sql_query("UPDATE $DVD_PROPERTIES_TABLE SET value='-2.27||0|0|0|0|$MyConnectionId' WHERE property='CurrentPosition'")) { safeDbDie(); }
 
     if ($ProfileStatistics) {
         if ($inbrowser) echo "<pre>";

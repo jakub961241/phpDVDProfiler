@@ -1,11 +1,11 @@
 <?php
 $originsmin = 0;
 $hideunknown = true;
-include_once('graph_init.php');
-include_once($jpgraphlocation.'jpgraph.php');
-include_once($jpgraphlocation.'jpgraph_pie.php');
-include_once($jpgraphlocation.'jpgraph_pie3d.php');
-//include_once($jpgraphlocation.'jpgraph_bar.php');
+include_once 'graph_init.php';
+include_once $jpgraphlocation.'jpgraph.php';
+include_once $jpgraphlocation.'jpgraph_pie.php';
+include_once $jpgraphlocation.'jpgraph_pie3d.php';
+//include_once $jpgraphlocation.'jpgraph_bar.php';
 
 $sql = "SELECT countryoforigin,countryoforigin2,countryoforigin3, sum(1) count FROM $DVD_TABLE WHERE collectiontype='owned' $originspecialcondition GROUP by countryoforigin,countryoforigin2,countryoforigin3";
 $result = $db->sql_query($sql) or die($db->sql_error());

@@ -408,10 +408,10 @@ global $DontBreakOnBadPNGGDRoutines;
             $thumbImageHeight = $imageHeight + $bannerHeight;
         }
         else {
-            $ThumbHtoWRatio = $requestedHeight / $requestedWidth;
+            $thumbHtoWRatio = $requestedHeight / $requestedWidth;
             $thumbImageHeight = $requestedHeight;
-            $WhichIsTooLarge = ($OriginalImageHeight + $bannerHeightForActualImageWidth) / $OriginalImageWidth;
-            if ($WhichIsTooLarge > $ThumbHtoWRatio) {
+            $whichIsTooLarge = ($OriginalImageHeight + $bannerHeightForActualImageWidth) / $OriginalImageWidth;
+            if ($whichIsTooLarge > $thumbHtoWRatio) {
 // height must be scaled
                 $imageHeight = round($thumbImageHeight / (1 + $bannerHeightPercent));
                 $imageWidth = round(($imageHeight * $OriginalImageWidth) / $OriginalImageHeight);
@@ -1184,15 +1184,15 @@ function stripQuotes($str) {
     return str_replace(['"', "'"], '', $str);
 }
 
-function Replace2Lang($matches) {
+function replace2Lang($matches) {
 global $lang;
     $matches[1] = stripQuotes($matches[1]);
     $matches[2] = stripQuotes($matches[2]);
-    return($lang[$matches[1]][$matches[2]]);
+    return $lang[$matches[1]][$matches[2]];
 }
 
-function ReplaceLang($matches) {
+function replaceLang($matches) {
 global $lang;
     $matches[1] = stripQuotes($matches[1]);
-    return($lang[$matches[1]]);
+    return $lang[$matches[1]];
 }

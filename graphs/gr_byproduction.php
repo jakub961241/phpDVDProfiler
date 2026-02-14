@@ -1,7 +1,7 @@
 <?php
-include_once('graph_init.php');
-include_once($jpgraphlocation.'jpgraph.php');
-include_once($jpgraphlocation.'jpgraph_bar.php');
+include_once 'graph_init.php';
+include_once $jpgraphlocation.'jpgraph.php';
+include_once $jpgraphlocation.'jpgraph_bar.php';
 
 $sql = $db->sql_query("SELECT productionyear,COUNT(title) AS count "
             ."FROM $DVD_TABLE WHERE collectiontype='owned' "

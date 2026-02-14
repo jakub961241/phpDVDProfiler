@@ -323,7 +323,7 @@ global $getimages, $img_webpathf, $thumbnails;
                 'panAndScan', 'fullFrame', 'letterbox', 'enhanced16x9', 'originalaspect', 'colorColor', 'colorBW',
                 'colorColorized', 'colorMixed', 'casecheckdigit', 'caseunknown', 'caseclear', 'casesnapper',
                 'casedigipack', 'collectiontype', 'countryoforigin', 'custommediatype', 'loaninfo');
-            if (!preg_match('/^[a-zA-Z_][a-zA-Z0-9_]*$/', $key) || !in_array($key, $allowed_columns)) {
+            if (!preg_match('/^[a-zA-Z_]\w*$/', $key) || !in_array($key, $allowed_columns)) {
                 break; // skip unknown/invalid column names
             }
             switch ($value) {
@@ -396,15 +396,17 @@ global $getimages, $img_webpathf, $thumbnails;
             $results .= "<td valign=top align=center width=\"20%\"><a href='index.php?mediaid=$esc_id&amp;action=show' target='entry'>$thumbs<br>$esc_title</a></td>";
     }
     $db->sql_freeresult($res);
-    if ($results == '<table><tr>')
+    if ($results == '<table><tr>') {
         $results = '<br><h1>No profiles matched search criteria.</h1>';
-    else
+    } else {
         $results .= '</tr></table>';
+    }
 
-    if (!$ShowSQLInPicker)
+    if (!$ShowSQLInPicker) {
         $MainQuery = '';
-    else
+    } else {
         $MainQuery = htmlspecialchars($MainQuery, ENT_QUOTES, 'ISO-8859-1');
+    }
 
     sendNoCacheHeaders('Content-Type: text/html; charset="windows-1252";');
     $esc_chooser = htmlspecialchars($lang['CHOOSEREXECUTION'] ?? '', ENT_QUOTES, 'ISO-8859-1');

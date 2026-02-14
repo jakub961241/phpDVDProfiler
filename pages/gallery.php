@@ -799,10 +799,11 @@ function get_SQL($page, $dpp = 60){
 if (!isset ($_GET['$printall'])) $_GET['$printall'] = false;
 $_GET['showall'] = !empty($_GET['showall']);
 
-if ($TitlesPerPage == 0)
+if ($TitlesPerPage == 0) {
     $dpp=60;
-else
+} else {
     $dpp=$TitlesPerPage;
+}
 
 
     $allowed_sortby = array('sorttitle', 'productionyear', 'released', 'purchasedate', 'collectionnumber', 'runningtime', 'rating', 'reviews', 'timestamp', 'director', 'genres', 'loaninfo', 'loandue', 'wishpriority', 'none');
@@ -851,13 +852,14 @@ else
     else
         $letter = '';
 
-    if (!isset ($_GET['ct']))
+    if (!isset ($_GET['ct'])) {
         $ct = 'owned';
-    else {
+    } else {
         $ct = $_GET['ct'];
         $allowed_ct = array('owned', 'ordered', 'wishlist', 'loaned', 'all');
-        if (!in_array($ct, $allowed_ct) && !is_numeric($ct) && substr($ct, 0, strlen('FJW-')) !== 'FJW-')
+        if (!in_array($ct, $allowed_ct) && !is_numeric($ct) && substr($ct, 0, strlen('FJW-')) !== 'FJW-') {
             $ct = 'owned';
+        }
     }
 
     if (!isset ($_GET['mediaid'])){

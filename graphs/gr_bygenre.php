@@ -1,8 +1,8 @@
 <?php
-include_once('graph_init.php');
-include_once($jpgraphlocation.'jpgraph.php');
-include_once($jpgraphlocation.'jpgraph_pie.php');
-include_once($jpgraphlocation.'jpgraph_pie3d.php');
+include_once 'graph_init.php';
+include_once $jpgraphlocation.'jpgraph.php';
+include_once $jpgraphlocation.'jpgraph_pie.php';
+include_once $jpgraphlocation.'jpgraph_pie3d.php';
 
 $numslices = $genremax;
 if ($numslices < 5)
