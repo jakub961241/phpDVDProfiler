@@ -311,7 +311,7 @@ if ($ii) {
         $img_webpathb = '';
 
     $vphp = phpversion();
-    $vmysql = MySQLVersion();
+    $vmysql = mySqlVersion();
     $vxml = date("Y-m-d-H:i:s", GetLastUpdateTime('LastUpdate'));
     $os = php_uname('s');
 

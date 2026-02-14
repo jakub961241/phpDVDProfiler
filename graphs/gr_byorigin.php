@@ -20,7 +20,7 @@ $maxcount = 0;
 while ($row = $db->sql_fetch_array($result)) {
     $origin = '';
     if ($row['countryoforigin'] != '') {
-        CountryToLang($row['countryoforigin'], $origin, $countryloc);
+        countryToLang($row['countryoforigin'], $origin, $countryloc);
         if (!isset($origins[$origin]))
             $origins[$origin] = 0;
         $origins[$origin] += $row['count'];
@@ -28,7 +28,7 @@ while ($row = $db->sql_fetch_array($result)) {
             $maxcount = $origins[$origin];
     }
     if ($row['countryoforigin2'] != '') {
-        CountryToLang($row['countryoforigin2'], $origin, $countryloc);
+        countryToLang($row['countryoforigin2'], $origin, $countryloc);
         if (!isset($origins[$origin]))
             $origins[$origin] = 0;
         $origins[$origin] += $row['count'];
@@ -36,7 +36,7 @@ while ($row = $db->sql_fetch_array($result)) {
             $maxcount = $origins[$origin];
     }
     if ($row['countryoforigin3'] != '') {
-        CountryToLang($row['countryoforigin3'], $origin, $countryloc);
+        countryToLang($row['countryoforigin3'], $origin, $countryloc);
         if (!isset($origins[$origin]))
             $origins[$origin] = 0;
         $origins[$origin] += $row['count'];

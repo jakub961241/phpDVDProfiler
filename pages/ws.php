@@ -610,7 +610,7 @@ global $uclass, $ws_watcher, $usejpgraph, $dolast, $domost, $dobest, $doworst, $
                 $mouse .= "')\"";
             }
             $mouse .= ">";
-            $mouse .= $firstname . " ". HideName($lastname) . "</a>";
+            $mouse .= $firstname . " ". hideName($lastname) . "</a>";
             echo<<<EOT
 <tr class=line><td colspan=$numcols></td></tr>
 <tr $thisclass valign=middle align=center>
@@ -1000,7 +1000,7 @@ global $db, $DVD_TABLE, $DVD_EVENTS_TABLE, $DVD_USERS_TABLE, $lang, $watched, $h
     if ($getimages == 3)
         $thumbname = "$img_webpath[$id]f.jpg";
     else
-        $thumbname = PhyspathToWebpath(resize_jpg($id, "f", 60, 100));
+        $thumbname = physpathToWebpath(resizeJpg($id, "f", 60, 100));
 
     $mouse = "<a href=\"index.php?mediaid=$id&amp;action=show\"";
     $mouse .= " onmouseover=\"";
@@ -1036,7 +1036,7 @@ global $db, $DVD_TABLE, $DVD_EVENTS_TABLE, $DVD_USERS_TABLE, $lang, $watched, $h
                 else
                         $thisclass = 'class=o';
         $mouse .= "<tr $thisclass>";
-        $mouse .= "<td style=\'padding-left:5px; padding-right=5px\' valign=middle align=center>$firstname " . HideName($lastname) . "</td>";
+        $mouse .= "<td style=\'padding-left:5px; padding-right=5px\' valign=middle align=center>$firstname " . hideName($lastname) . "</td>";
         list($tdate, $ttime) = explode(' ',$timestamp);
         list($tyear, $tmonth, $tday) = explode('-', $tdate);
         list($thour, $tmin, $tsec) = explode(':',$ttime);
@@ -1552,7 +1552,7 @@ global $imagecachedir, $action, $gdfp, $DVD_TAGS_TABLE, $CullDupsFromWatched, $m
         echo "I'm sorry, but profile ($me) doesn't exist";
     foreach ($profiles as $key => $val)
         if (isset($val['last']))
-            $profiles[$key]['last'] = HideName($profiles[$key]['last']);
+            $profiles[$key]['last'] = hideName($profiles[$key]['last']);
 echo "<pre>\$me="; print_r($me);echo "\n\$profiles="; print_r($profiles);
         exit;
     }
@@ -1795,7 +1795,7 @@ echo "<pre>\$me="; print_r($me);echo "\n\$profiles="; print_r($profiles);
 
 #       New code for caching of the thumbnails
         $me_updating = $me;
-        $filename = resize_jpg($row, 'f', $me_width, $me_quality, $me_height, $me_bgcol);
+        $filename = resizeJpg($row, 'f', $me_width, $me_quality, $me_height, $me_bgcol);
 #       Wow was that it! Much smaller than before
 
         $imagedata = getimagesize($filename);
@@ -1849,7 +1849,7 @@ echo "<pre>\$me="; print_r($me);echo "\n\$profiles="; print_r($profiles);
         @unlink($filename);
     }
     else {
-        SendNoCacheHeaders('Content-Type: image/jpeg');
+        sendNoCacheHeaders('Content-Type: image/jpeg');
     }
     ImageJPEG($im2, $filename, $me_quality);
     ImageDestroy($im2); // fjw added plug memory leak

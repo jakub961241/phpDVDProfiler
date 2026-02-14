@@ -5,8 +5,8 @@ include_once('version.php');
 include_once('global.php');
 
 function UpdateDataRow(&$dvd) {
-    $dvd['primegenre'] = GenreTranslation($dvd['primegenre']);
-    FormatTheTitle($dvd);
+    $dvd['primegenre'] = genreTranslation($dvd['primegenre']);
+    formatTheTitle($dvd);
 }
 
 if (isset($img)) $action = 'image';
@@ -16,7 +16,7 @@ if ($ajax) {
     $db->convertToUtf8 = true;
 }
 define('HTML_CHARSET', $ajax ? 'UTF-8' : 'ISO-8859-1');
-CheckOutOfDateSchema($action);
+checkOutOfDateSchema($action);
 
 $iconPath = 'gfx';
 
@@ -87,7 +87,7 @@ if ($action == 'HealthCheck') {
     $db->sql_freeresult($res);
     $db->sql_query("UPDATE $DVD_PROPERTIES_TABLE SET value='0||0|0|0|0|$row[Id]' WHERE property='CurrentPosition'") or die($db->sql_error());
     unset($row);
-    ModifyTables('ENABLE');
+    modifyTables('ENABLE');
     DebugSQL($db, "$action");
     $action = 'UpdateStatus';   // while this looks hackish, it prevents having to duplicate code
 }
@@ -113,7 +113,7 @@ if ($action == 'UpdateStatus') {
         }
         $db->sql_freeresult($result);
     }
-    SendNoCacheHeaders();
+    sendNoCacheHeaders();
     echo "$QueryNumber-UpdateStatus:Status=$UpdateStatus:$found\n\n";
     DebugSQL($db, "$action");
     exit;
@@ -121,8 +121,8 @@ if ($action == 'UpdateStatus') {
 
 if ($action == 'info') {
     $thedatetime = date('Y-m-d-H:i:s', GetLastUpdateTime('LastUpdate'));
-    SendNoCacheHeaders();
-    echo "phpDVDProfiler:Version=$VersionNum|XML:Version=$thedatetime|MySQL:Version=".MySQLVersion()."|PHP:Version=".phpversion()."\n\n";
+    sendNoCacheHeaders();
+    echo "phpDVDProfiler:Version=$VersionNum|XML:Version=$thedatetime|MySQL:Version=".mySqlVersion()."|PHP:Version=".phpversion()."\n\n";
     DebugSQL($db, "$action");
     exit;
 }
@@ -139,14 +139,14 @@ if ($action == 'notes') {
 }
 
 if ($action == 'image') {
-    DiscourageAbuse($RefuseBots);
+    discourageAbuse($RefuseBots);
     if (strlen($mediaid) > 0 && strlen($mediaid) < 20) $mediaid = str_pad($mediaid, 20, "\x00");
     $TheTitle = $lang['DVDCOVER'];
     $res = $db->sql_query("SELECT title, originaltitle, description, custommediatype FROM $DVD_TABLE WHERE id='".$db->sql_escape($mediaid)."'") or die($db->sql_error());
     $dat = $db->sql_fetchrow($res);
     $db->sql_freeresult($res);
     if ($dat && $dat['title'] != '') {
-        FormatTheTitle($dat);
+        formatTheTitle($dat);
         $TheTitle = fix1252(htmlspecialchars($dat['title'], ENT_COMPAT, HTML_CHARSET));
     }
 
@@ -159,7 +159,7 @@ if ($action == 'image') {
         else
             $ban = @$MediaTypes[$dat['custommediatype']]['Banner'];
         if ($ban != '') {
-            $imagedata = getimagesize(WebpathToPhyspath($img));
+            $imagedata = getimagesize(webpathToPhyspath($img));
             $width = $imagedata[0];
             $hdlogo = "<img width=\"$width\" src=\"$ban\" border=0 alt=\"$TheTitle\" title=\"$TheTitle\"/><br>";
         }
@@ -268,7 +268,7 @@ if ($action == 'update' || $action == 'CompleteUpdate' || $action == 'UpdateStat
         $forumuser = '';
     if ($action == 'CompleteUpdate') {
         $delete = 1;
-        $UpdateLast = UpdateUpdateLast();
+        $UpdateLast = updateUpdateLast();
     }
     $remove_missing = true;     // default to not doing partial updates
 // This allows this to be used from the command-line if desired
@@ -844,7 +844,7 @@ if ($action == 'nav') {
         $thetitle = "  ($lang[SEARCHED] $lang[RATINGS] $lang[FOR] \"".$lang['LOCALE'.$tmploc] . ": $tmpsys: $tmprat\")";
         break;
     case 'genre':
-        $thetitle = "  ($lang[SEARCHED] $lang[GENRES] $lang[FOR] \"" . GenreTranslation($searchtext) . '")';
+        $thetitle = "  ($lang[SEARCHED] $lang[GENRES] $lang[FOR] \"" . genreTranslation($searchtext) . '")';
         break;
     case 'purchase':
         $result = $db->sql_query("SELECT suppliername from $DVD_SUPPLIER_TABLE WHERE sid=".$db->sql_escape($searchtext)) or die($db->sql_error());
@@ -860,7 +860,7 @@ if ($action == 'nav') {
         $thetitle = "  ($lang[SEARCHED] $lang[LOCALE] $lang[FOR] \"".$lang['LOCALE'.$searchtext].'")';
         break;
     case 'coo':
-        CountryToLang($searchtext, $countryname, $localenum);
+        countryToLang($searchtext, $countryname, $localenum);
         $thetitle = "  ($lang[SEARCHED] $lang[COUNTRYOFORIGIN] $lang[FOR] \"$countryname\")";
         break;
     case 'tag':
@@ -905,7 +905,7 @@ if ($action == 'nav') {
     $result = $db->sql_query("SELECT collectiontype, SUM(countas) AS itemcount FROM $DVD_TABLE WHERE 1 $noadult GROUP BY collectiontype") or die($db->sql_error());
     while ($items = $db->sql_fetchrow($result)) {
         $numincollection[$items['collectiontype']] = $items['itemcount'];
-        $colltype = CustomTranslation(strtoupper(str_replace(' ', '', $items['collectiontype'])), $items['collectiontype']);
+        $colltype = customTranslation(strtoupper(str_replace(' ', '', $items['collectiontype'])), $items['collectiontype']);
         $infoline .= "$items[itemcount] $colltype, ";
         $numincollection['all'] += $items['itemcount'];
     }
@@ -1056,7 +1056,7 @@ EOT;
     $sql = "SELECT DISTINCT(genre) FROM $DVD_GENRES_TABLE ORDER BY genre";
     $result = $db->sql_query($sql) or die($db->sql_error());
     while ($row = $db->sql_fetchrow($result)) {
-        $displaygenre = GenreTranslation($row['genre']);
+        $displaygenre = genreTranslation($row['genre']);
         if ($searchtext == $displaygenre)
             echo "<option value=\"$row[genre]\" selected>$displaygenre</option>\n";
         else
@@ -1097,7 +1097,7 @@ EOT;
     unset($coo);
     sort($remembercoo);
     foreach ($remembercoo as $coo) {
-        CountryToLang($coo, $countryname, $localenum);
+        countryToLang($coo, $countryname, $localenum);
         if ($searchtext == $countryname)
             echo "<option value=\"$countryname\" selected>$countryname</option>\n";
         else
@@ -1423,7 +1423,7 @@ case 'locale':
     $Extra = "dvd WHERE IF (LOCATE('.',id) = '0',0,SUBSTRING(id,locate('.',id)+1,LENGTH(id)-LOCATE('.',id)))+0 = '$srchtext' AND";
     break;
 case 'coo':
-    CountryToLang($searchtext, $countryname, $localenum);
+    countryToLang($searchtext, $countryname, $localenum);
     $countryname = $db->sql_escape($countryname);
     $Extra = "dvd WHERE (countryoforigin = '$countryname' OR countryoforigin2 = '$countryname' OR countryoforigin3 = '$countryname') AND";
     break;
@@ -2123,7 +2123,7 @@ global $db, $PHP_SELF, $mobilepage, $ajax;
         $cnum = ProjectAColumn($thirdcol, $dvd, 'right');
 
         $stitle = fix1252(htmlspecialchars($dvd['sorttitle'], ENT_COMPAT, HTML_CHARSET));
-        $ttitle = FormatIcon($dvd) . DisplayDecoration(fix1252(htmlspecialchars($dvd['title'], ENT_COMPAT, HTML_CHARSET)), $dvd);
+        $ttitle = formatIcon($dvd) . DisplayDecoration(fix1252(htmlspecialchars($dvd['title'], ENT_COMPAT, HTML_CHARSET)), $dvd);
         $dd = 10 + $depth;
 
         $htmlId = $ajax ? rtrim($dvd['id'], "\x00") : $dvd['id'];
@@ -2204,7 +2204,7 @@ global $db, $PHP_SELF, $mobilepage, $ajax;
         }
 
         $stitle = fix1252(htmlspecialchars($dvd['sorttitle'], ENT_COMPAT, HTML_CHARSET));
-        $ttitle = FormatIcon($dvd) . DisplayDecoration(fix1252(htmlspecialchars($dvd['title'], ENT_COMPAT, HTML_CHARSET)), $dvd);
+        $ttitle = formatIcon($dvd) . DisplayDecoration(fix1252(htmlspecialchars($dvd['title'], ENT_COMPAT, HTML_CHARSET)), $dvd);
 
         $htmlId = $ajax ? rtrim($dvd['id'], "\x00") : $dvd['id'];
         $linkattr = $ajax
@@ -2818,7 +2818,7 @@ if ($action == 'show') {
         $dvd['genres'] = array();
         $result = $db->sql_query("SELECT genre FROM $DVD_GENRES_TABLE WHERE id='".$db->sql_escape($mediaid)."' ORDER BY dborder") or die($db->sql_error());
         while ($row = $db->sql_fetchrow($result)) {
-            $dvd['p_genres'] .= '<br>' . GenreTranslation($row['genre']);
+            $dvd['p_genres'] .= '<br>' . genreTranslation($row['genre']);
             $dvd['genres'][] = $row['genre'];
         }
         unset($row);
@@ -2936,7 +2936,7 @@ if ($action == 'show') {
         $dvd['frontimage'] = $dvd['frontthumb'] = $dvd['frontimageanchor'] = '';
         $dvd['backimage'] = $dvd['backthumb'] = $dvd['backimageanchor'] = '';
 
-        FormatTheTitle($dvd);
+        formatTheTitle($dvd);
         $TheTitle = fix1252(htmlspecialchars($dvd['title'], ENT_COMPAT, HTML_CHARSET));
 
         $ImageNotFound = '';
@@ -3137,7 +3137,7 @@ if ($action == 'show') {
             if ($cnum == '(#)' || $cnum == '(#0)')
                 $cnum = '';
         }
-        $ctype = CustomTranslation(strtoupper(str_replace(' ', '', $dvd['realcollectiontype'])), $dvd['realcollectiontype']);
+        $ctype = customTranslation(strtoupper(str_replace(' ', '', $dvd['realcollectiontype'])), $dvd['realcollectiontype']);
         $j = $dvd['runningtime']%60;
         if ($j < 10) $j = '0'.$j;
         $runtime = floor($dvd['runningtime']/60) . ":$j ($dvd[runningtime] $lang[MINUTES])";
@@ -3369,7 +3369,7 @@ if ($action == 'show') {
             $dvd['purchaseprice'] = $lang['HIDDEN'];
         }
         if ($dvd['collectiontype'] != 'owned')
-            $locval = CustomTranslation(strtoupper(str_replace(' ', '', $dvd['collectiontype'])), $dvd['collectiontype']);
+            $locval = customTranslation(strtoupper(str_replace(' ', '', $dvd['collectiontype'])), $dvd['collectiontype']);
 
         if ($AlwaysRemoveFromNotes != '')
             $dvd['notes'] = str_replace($AlwaysRemoveFromNotes, '', $dvd['notes']);
@@ -3387,21 +3387,21 @@ if ($action == 'show') {
         $dvd['title']         = fix1252(htmlspecialchars($dvd['title'], ENT_COMPAT, HTML_CHARSET));
         $xxx = '';
         if ($dvd['countryoforigin'] != '') {
-            CountryToLang($dvd['countryoforigin'], $countryname, $countryloc);
+            countryToLang($dvd['countryoforigin'], $countryname, $countryloc);
             if ($countryloc != '')
                 $xxx .= "<img src=\"gfx/loc$countryloc.gif\" style=\"vertical-align:-30%; margin-bottom:2px\" title=\"$countryname\" alt=\"\"/>";
             $xxx .= "&nbsp;$countryname";
         }
         if ($dvd['countryoforigin2'] != '') {
             if ($xxx != '') $xxx .= ', ';
-            CountryToLang($dvd['countryoforigin2'], $countryname, $countryloc);
+            countryToLang($dvd['countryoforigin2'], $countryname, $countryloc);
             if ($countryloc != '')
                 $xxx .= "<img src=\"gfx/loc$countryloc.gif\" style=\"vertical-align:-30%; margin-bottom:2px\" title=\"$countryname\" alt=\"\"/>";
             $xxx .= "&nbsp;$countryname";
         }
         if ($dvd['countryoforigin3'] != '') {
             if ($xxx != '') $xxx .= ', ';
-            CountryToLang($dvd['countryoforigin3'], $countryname, $countryloc);
+            countryToLang($dvd['countryoforigin3'], $countryname, $countryloc);
             if ($countryloc != '')
                 $xxx .= "<img src=\"gfx/loc$countryloc.gif\" style=\"vertical-align:-30%; margin-bottom:2px\" title=\"$countryname\" alt=\"\"/>";
             $xxx .= "&nbsp;$countryname";
@@ -3520,7 +3520,7 @@ EOT;
                 $userres = $db->sql_query("SELECT firstname,lastname FROM $DVD_USERS_TABLE WHERE uid=$dvd[giftuid]") or die($db->sql_error());
                 $r2 = $db->sql_fetchrow($userres);
                 $db->sql_freeresult($userres);
-                $giftfiddle3 = $r2['firstname'] . ' ' . HideName($r2['lastname']);
+                $giftfiddle3 = $r2['firstname'] . ' ' . hideName($r2['lastname']);
             }
         }
         echo "<div class=\"row mb-1\"><div class=\"col-sm-4 label-cell\">$plwrapf$giftfiddle1:$plwrapb</div><div class=\"col-sm-8 value-cell\">$dvd[p_purchasedate]</div></div>\n";
@@ -3759,7 +3759,7 @@ EOT;
                 $userres = $db->sql_query("SELECT firstname,lastname FROM $DVD_USERS_TABLE WHERE uid=$dvd[giftuid]") or die($db->sql_error());
                 $r = $db->sql_fetchrow($userres);
                 $db->sql_freeresult($userres);
-                $giftfiddle3 = $r['firstname'] . ' ' . HideName($r['lastname']);
+                $giftfiddle3 = $r['firstname'] . ' ' . hideName($r['lastname']);
             }
         }
         echo <<<EOT

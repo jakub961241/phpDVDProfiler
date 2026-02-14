@@ -142,7 +142,7 @@ EOT;
         exit;
     }
 
-    if (!$ajax) SendNoCacheHeaders('Content-Type: text/html; charset="windows-1252";');
+    if (!$ajax) sendNoCacheHeaders('Content-Type: text/html; charset="windows-1252";');
 
     // Authentication - same credentials as update page
     $pref_authorized = false;

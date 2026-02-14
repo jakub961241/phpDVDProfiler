@@ -3,11 +3,13 @@
 error_reporting(E_ALL);
 require_once 'php-8.1-strftime.php';
 use function PHP81_BC\strftime;
-include_once('version.php');
+include_once 'version.php';
 
 if (!defined('IN_SCRIPT')) {
     die('This script should not be manually executed ... Possible Hacking attempt');
 }
+
+define('GFX_UNKNOWN', 'gfx/unknown.jpg');
 
 function strftimeReplacement(string $format, ?int $timestamp = null)
 {
@@ -23,7 +25,7 @@ function strftimeReplacement(string $format, ?int $timestamp = null)
     }, $result);
 }
 
-function UpdateUpdateLast($str='0||0|0|0|0|0') {
+function updateUpdateLast($str='0||0|0|0|0|0') {
     $parts = explode('|', $str);
     $x['Offset'] = $parts[0] ?? '0';
     $x['Filename'] = $parts[1] ?? '';
@@ -37,28 +39,30 @@ function UpdateUpdateLast($str='0||0|0|0|0|0') {
         $x['Filename'] = $fparts[0] ?? '';
         $x['Filesize'] = $fparts[1] ?? '';
     }
-    if (!isset($x['ConnectionId']))
+    if (!isset($x['ConnectionId'])) {
         $x['ConnectionId'] = '-1';
-    return($x);
+    }
+    return $x;
 }
 
-function MySQLVersion() {
-global $db, $dbtype, $MyMySQLVersion;
+function mySqlVersion() {
+global $db, $dbtype, $myMySqlVersion;
 
-    if (!isset($MyMySQLVersion)) {
-        if ($dbtype != 'mysql' && $dbtype != 'mysqli')
-            return(false);      // This fails if it isn't mysql
+    if (!isset($myMySqlVersion)) {
+        if ($dbtype != 'mysql' && $dbtype != 'mysqli') {
+            return false;
+        }
         $sql = "SELECT VERSION() AS ver";
         $result = $db->sql_query($sql) or die($db->sql_error());
         $answer = $db->sql_fetchrow($result);
         $db->sql_freeresult($result);
-        $MyMySQLVersion = $answer['ver'];
+        $myMySqlVersion = $answer['ver'];
         unset($answer);
     }
-    return($MyMySQLVersion);
+    return $myMySqlVersion;
 }
 
-function DebugLog($str) {
+function debugLog($str) {
 global $DebugFilename;
 
     if (($handle=@fopen($DebugFilename, 'a')) !== false) {
@@ -67,17 +71,18 @@ global $DebugFilename;
     }
 }
 
-function SendNoCacheHeaders($endheader='') {
+function sendNoCacheHeaders($endheader='') {
     header('Expires: Mon, 26 Jul 1997 05:00:00 GMT');
     header('Last-Modified: ' . gmdate('D, d M Y H:i:s') . ' GMT');
     header('Cache-Control: no-store, no-cache, must-revalidate');
     header('Cache-Control: post-check=0, pre-check=0', false);
     header('Pragma: no-cache');
-    if ($endheader != '')
+    if ($endheader != '') {
         header($endheader);
+    }
 }
 
-function DiscourageAbuse($RefuseBots) {
+function discourageAbuse($refuseBots) {
 // This routine rely on the (current) fact that the img= parameter should only be called from
 // within phpdvdprofiler, and indeed, only from index.php
 // it is explicitly checking that the referring URL was from phpdvdprofiler
@@ -86,32 +91,35 @@ function DiscourageAbuse($RefuseBots) {
 // anonymously grab web content ...
 global $PHP_SELF;
 
-    if (!$RefuseBots)
+    if (!$refuseBots) {
         return;
+    }
     $str = '~://[^/]*'.$PHP_SELF.'~i';
     $referer = '';
-    if (isset($_SERVER['HTTP_REFERER']))
+    if (isset($_SERVER['HTTP_REFERER'])) {
         $referer = @$_SERVER['HTTP_REFERER'];
-    if (($num=preg_match($str, $referer)) != 1) {
-//      DebugLog("$_SERVER[REMOTE_ADDR]: $_SERVER[REQUEST_URI] FROM >$referer<");
+    }
+    if (preg_match($str, $referer) != 1) {
+//      debugLog("$_SERVER[REMOTE_ADDR]: $_SERVER[REQUEST_URI] FROM >$referer<");
 //maybe send a "get knotted" image back to the bot/scammer
         exit;
     }
 }
 
-function Hex($int) {
-    return(sprintf("%08x", $int));
+function hex($int) {
+    return sprintf("%08x", $int);
 }
 
-function CustomTranslation($ind, $str) {
+function customTranslation($ind, $str) {
 global $lang;
 
-    if (isset($lang[$ind]))
+    if (isset($lang[$ind])) {
         $str = $lang[$ind];
-    return($str);
+    }
+    return $str;
 }
 
-function CountryToLang($country, &$langname, &$localenum) {
+function countryToLang($country, &$langname, &$localenum) {
 global $lang, $CountryToLocality;
 
     $langname = $country;
@@ -120,76 +128,87 @@ global $lang, $CountryToLocality;
         $localenum = $CountryToLocality[$country];
         $langname = $lang['LOCALE'.$localenum];
     }
-    return;
 }
 
-function GenreTranslation($gen) {
+function genreTranslation($gen) {
 global $genre_translation;
-    if (isset($genre_translation[$gen]))
+    if (isset($genre_translation[$gen])) {
         $gen = $genre_translation[$gen];
-    return($gen);
+    }
+    return $gen;
 }
 
-function HideName($str) {
+function hideName($str) {
 global $HideNames, $IsPrivate;
-    if (!$HideNames || $IsPrivate)
-        return($str);
-    return(substr($str, 0, 1).'.');
+    if (!$HideNames || $IsPrivate) {
+        return $str;
+    }
+    return substr($str, 0, 1).'.';
 }
 
-function PhyspathToWebpath($string) {
+function physpathToWebpath($string) {
 global $img_physpath, $img_webpath;
-    return(str_replace($img_physpath, $img_webpath, $string));
+    return str_replace($img_physpath, $img_webpath, $string);
 }
 
-function WebpathToPhyspath($string) {
+function webpathToPhyspath($string) {
 global $img_physpath, $img_webpath;
-    return(str_replace($img_webpath, $img_physpath, $string));
+    return str_replace($img_webpath, $img_physpath, $string);
 }
 
-function FormatIcon(&$dvd) {
+function formatIcon(&$dvd) {
 global $AddFormatIcons, $MediaTypes;
 
     $formaticon = '';
     if ($AddFormatIcons != 2) {
-        if ($dvd['custommediatype'] != '' && @$MediaTypes[$dvd['custommediatype']]['FormatIcon'] != '')
+        if ($dvd['custommediatype'] != '' && @$MediaTypes[$dvd['custommediatype']]['FormatIcon'] != '') {
             $formaticon .= '<img src="' . $MediaTypes[$dvd['custommediatype']]['FormatIcon'] . '" alt="" border=0/>';
+        }
         switch ($dvd['builtinmediatype']) {
         case MEDIA_TYPE_DVD:
-            if ($AddFormatIcons == 0 || $formaticon != '')  // force the DVD icon if there is already a custom icon
-                if ($MediaTypes[MEDIA_TYPE_DVD]['FormatIcon'] != '')
+            if ($AddFormatIcons == 0 || $formaticon != '') {
+                if ($MediaTypes[MEDIA_TYPE_DVD]['FormatIcon'] != '') {
                     $formaticon .= '<img src="' . $MediaTypes[MEDIA_TYPE_DVD]['FormatIcon'] . '" alt="" border=0/>';
+                }
+            }
             break;
         case MEDIA_TYPE_HDDVD:
         case MEDIA_TYPE_BLURAY:
         case MEDIA_TYPE_ULTRAHD:
-            if ($MediaTypes[$dvd['builtinmediatype']]['FormatIcon'] != '')
+            if ($MediaTypes[$dvd['builtinmediatype']]['FormatIcon'] != '') {
                 $formaticon .= '<img src="' . $MediaTypes[$dvd['builtinmediatype']]['FormatIcon'] . '" alt="" border=0/>';
+            }
             break;
         case MEDIA_TYPE_HDDVD_DVD:
         case MEDIA_TYPE_BLURAY_DVD:
-            if ($MediaTypes[$dvd['builtinmediatype']]['FormatIcon'] != '')
+            if ($MediaTypes[$dvd['builtinmediatype']]['FormatIcon'] != '') {
                 $formaticon .= '<img src="' . $MediaTypes[$dvd['builtinmediatype']]['FormatIcon'] . '" alt="" border=0/>';
-            if ($MediaTypes[MEDIA_TYPE_DVD]['FormatIcon'] != '')
+            }
+            if ($MediaTypes[MEDIA_TYPE_DVD]['FormatIcon'] != '') {
                 $formaticon .= '<img src="' . $MediaTypes[MEDIA_TYPE_DVD]['FormatIcon'] . '" alt="" border=0/>';
+            }
             break;
         // Just display the 4k and BR icons for now to avoid clutter.
         case MEDIA_TYPE_ULTRAHD_BLURAY:
         case MEDIA_TYPE_ULTRAHD_BLURAY_DVD:
-            if ($MediaTypes[$dvd['builtinmediatype']]['FormatIcon'] != '')
+            if ($MediaTypes[$dvd['builtinmediatype']]['FormatIcon'] != '') {
                 $formaticon .= '<img src="' . $MediaTypes[$dvd['builtinmediatype']]['FormatIcon'] . '" alt="" border=0/>';
-            if ($MediaTypes[MEDIA_TYPE_BLURAY]['FormatIcon'] != '')
+            }
+            if ($MediaTypes[MEDIA_TYPE_BLURAY]['FormatIcon'] != '') {
                 $formaticon .= '<img src="' . $MediaTypes[MEDIA_TYPE_BLURAY]['FormatIcon'] . '" alt="" border=0/>';
+            }
             break;
-        break;
+        default:
+            break;
         }
-        if ($formaticon != '')
+        if ($formaticon != '') {
             $formaticon .= '&nbsp;';
+        }
     }
-    return($formaticon);
+    return $formaticon;
 }
 
-function FormatTheTitle(&$dvd) {
+function formatTheTitle(&$dvd) {
 global $titleorig, $titledesc;
 
     if ($dvd['originaltitle'] != '') {
@@ -204,6 +223,8 @@ global $titleorig, $titledesc;
         case 2:
             $dvd['title'] .= " ($dvd[originaltitle])";
             break;
+        default:
+            break;
         }
     }
     if ($dvd['description'] != '') {
@@ -217,17 +238,21 @@ global $titleorig, $titledesc;
         case 3:
             $dvd['title'] .= " - $dvd[description]";
             break;
+        default:
+            break;
         }
     }
 }
 
-function CheckOutOfDateSchema(&$action) {
+function checkOutOfDateSchema(&$action) {
 global $lang, $WeCannotContinue, $db_Errors, $inbrowser, $DontNeedDatabase, $dbname, $dbhost, $dbuser, $db_schema_version, $code_schema_version;
 
-    if (!$WeCannotContinue)
+    if (!$WeCannotContinue) {
         return;
-    if (in_array($action, $DontNeedDatabase))
+    }
+    if (in_array($action, $DontNeedDatabase)) {
         return;
+    }
     if ($db_Errors['code'] != 0) {
         switch ($db_Errors['code']) {
         case 1044:
@@ -261,35 +286,39 @@ global $lang, $WeCannotContinue, $db_Errors, $inbrowser, $DontNeedDatabase, $dbn
         echo html_entity_decode($output_string);
     }
     $action = 'update';
-    if ($db_Errors['code'] != 0)
+    if ($db_Errors['code'] != 0) {
         exit;
-    return;
+    }
 }
 
-function ModifyTables($onoff) {
+function modifyTables($onoff) {
 global $TryToFiddleIndices, $db;
 
-    if (!$TryToFiddleIndices)
+    if (!$TryToFiddleIndices) {
         return;
+    }
     $result = $db->sql_query("SHOW TABLES") or die($db->sql_error());
     while ($table = $db->sql_fetchrow($result)) {
         $db->sql_query("ALTER TABLE ".array_shift($table)." $onoff KEYS") or die($db->sql_error());
     }
     $db->sql_freeresult($result);
-    return;
 }
 
-function resize_jpg(&$idstring, $side, $RequestedWidth, $qual, $RequestedHeight=0, $bgcolor='', $center=true) {
+function resizeJpg(&$idstring, $side, $requestedWidth, $qual, $requestedHeight=0, $bgcolor='', $center=true) {
 global $img_physpath, $imagecachedir, $thumbnails, $AddHDLogos, $DVD_TABLE, $db, $MediaTypes;
 global $DontBreakOnBadPNGGDRoutines;
     if (!extension_loaded('gd')) {
         // GD not available, return original image or unknown
         $id = is_array($idstring) ? $idstring['id'] : $idstring;
         $filename = "$thumbnails/$id$side.jpg";
-        if (file_exists($img_physpath.$filename)) return($img_physpath.$filename);
+        if (file_exists($img_physpath.$filename)) {
+            return $img_physpath.$filename;
+        }
         $filename = "$id$side.jpg";
-        if (file_exists($img_physpath.$filename)) return($img_physpath.$filename);
-        return('gfx/unknown.jpg');
+        if (file_exists($img_physpath.$filename)) {
+            return $img_physpath.$filename;
+        }
+        return GFX_UNKNOWN;
     }
 // we wish to put high-def banners at the top, if necessary.
 // allow plain string id (causing possible SQL lookup) or array with pre-looked-up banner data
@@ -300,19 +329,20 @@ global $DontBreakOnBadPNGGDRoutines;
         $dvd = $idstring;
         $id = $dvd['id'];
     }
-    if ($bgcolor != '' && $bgcolor[0] == '#')
+    if ($bgcolor != '' && $bgcolor[0] == '#') {
         $bgcolor = substr($bgcolor, 1);
-    $RequestedHeight = round($RequestedHeight);
+    }
+    $requestedHeight = round($requestedHeight);
 
     $filename = "$thumbnails/$id$side.jpg";
     if (!isset($imagecachedir) || !is_dir($imagecachedir) || !is_writeable($imagecachedir)) {
         if (!file_exists($img_physpath.$filename)) {
             $filename = "$id$side.jpg";
             if (!file_exists($img_physpath.$filename)) {
-                return('gfx/unknown.jpg');
+                return GFX_UNKNOWN;
             }
         }
-        return($img_physpath.$filename);
+        return $img_physpath.$filename;
     }
 
 #   Now work out what file to use. Try thumb, then full, then unknown.
@@ -321,7 +351,7 @@ global $DontBreakOnBadPNGGDRoutines;
 #   Ok, check the main image
         $filename = "$id$side.jpg";
         if (!is_readable($img_physpath.$filename)) {
-            return('gfx/unknown.jpg');
+            return GFX_UNKNOWN;
         }
         $usethumb = false;
     }
@@ -331,17 +361,18 @@ global $DontBreakOnBadPNGGDRoutines;
     list($OriginalImageWidth, $OriginalImageHeight) = getimagesize($img_physpath.$filename);
     if ($usethumb) {
         $fullfilename = "$id$side.jpg";
-        if ($RequestedWidth > $OriginalImageWidth && is_readable($img_physpath.$fullfilename)) {
+        if ($requestedWidth > $OriginalImageWidth && is_readable($img_physpath.$fullfilename)) {
             $filename = $fullfilename;
             list($OriginalImageWidth, $OriginalImageHeight) = getimagesize($img_physpath.$filename);
         }
     }
-    if ($RequestedWidth == 0)
-        $RequestedWidth = $OriginalImageWidth;
+    if ($requestedWidth == 0) {
+        $requestedWidth = $OriginalImageWidth;
+    }
 
 #   Ok now we know the name of the source file we're using.
 
-    $newfilename = "$imagecachedir$id$side-$RequestedWidth-$qual-$RequestedHeight-$bgcolor-$center-imagecache.jpg";
+    $newfilename = "$imagecachedir$id$side-$requestedWidth-$qual-$requestedHeight-$bgcolor-$center-imagecache.jpg";
 
     if (!is_readable($newfilename) || filemtime($img_physpath.$filename) > filemtime($newfilename)) {
 #
@@ -355,43 +386,42 @@ global $DontBreakOnBadPNGGDRoutines;
                 $db->sql_freeresult($result);
             }
             $z = ($side=='f')? $dvd['mediabannerfront']: $dvd['mediabannerback'];
-            if ($z < 0)
-                $z = $dvd['custommediatype'];   // positive values are the builtins and -1 means the string custommediatype
+            if ($z < 0) {
+                $z = $dvd['custommediatype'];
+            }   // positive values are the builtins and -1 means the string custommediatype
             $hdbanner = @$MediaTypes[$z]['Banner']; // if it doesn't exist, it'll get set with an empty string
         }
 
         if ($hdbanner != '') {
             list($OriginalBannerWidth, $OriginalBannerHeight) = getimagesize($hdbanner);
-            $BannerHeightForActualImageWidth = round(($OriginalImageWidth * $OriginalBannerHeight) / $OriginalBannerWidth);
-            $BannerHeightPercent = $BannerHeightForActualImageWidth / $OriginalImageHeight;
-            $BannerHeight = round(($RequestedWidth * $OriginalBannerHeight) / $OriginalBannerWidth);
+            $bannerHeightForActualImageWidth = round(($OriginalImageWidth * $OriginalBannerHeight) / $OriginalBannerWidth);
+            $bannerHeightPercent = $bannerHeightForActualImageWidth / $OriginalImageHeight;
+            $bannerHeight = round(($requestedWidth * $OriginalBannerHeight) / $OriginalBannerWidth);
         }
         else {
-            $BannerHeight = 0;
-            $BannerHeightForActualImageWidth = 0;
-            $BannerHeightPercent = 0;
+            $bannerHeight = 0;
+            $bannerHeightForActualImageWidth = 0;
+            $bannerHeightPercent = 0;
         }
-        $ThumbImageWidth = $ImageWidth = $RequestedWidth;
-        if ($RequestedHeight == 0) {
-            $ImageWidth = $RequestedWidth;
+        $ImageWidth = $requestedWidth;
+        $ThumbImageWidth = $requestedWidth;
+        if ($requestedHeight == 0) {
             $ImageHeight = round(($ImageWidth * $OriginalImageHeight) / $OriginalImageWidth);
-            $ThumbImageWidth = $RequestedWidth;
-            $ThumbImageHeight = $ImageHeight + $BannerHeight;
+            $ThumbImageHeight = $ImageHeight + $bannerHeight;
         }
         else {
-            $ThumbHtoWRatio = $RequestedHeight / $RequestedWidth;
-            $ThumbImageWidth = $RequestedWidth;
-            $ThumbImageHeight = $RequestedHeight;
-            $WhichIsTooLarge = ($OriginalImageHeight + $BannerHeightForActualImageWidth) / $OriginalImageWidth;
+            $ThumbHtoWRatio = $requestedHeight / $requestedWidth;
+            $ThumbImageHeight = $requestedHeight;
+            $WhichIsTooLarge = ($OriginalImageHeight + $bannerHeightForActualImageWidth) / $OriginalImageWidth;
             if ($WhichIsTooLarge > $ThumbHtoWRatio) {
 // height must be scaled
-                $ImageHeight = round($ThumbImageHeight / (1 + $BannerHeightPercent));
+                $ImageHeight = round($ThumbImageHeight / (1 + $bannerHeightPercent));
                 $ImageWidth = round(($ImageHeight * $OriginalImageWidth) / $OriginalImageHeight);
-                $BannerHeight = $ThumbImageHeight - $ImageHeight;       // handle rounding/truncation artifacts
+                $bannerHeight = $ThumbImageHeight - $ImageHeight;       // handle rounding/truncation artifacts
             }
             else {
 // width must be scaled same as just correct ratio
-                $ImageWidth = $RequestedWidth;
+                $ImageWidth = $requestedWidth;
                 $ImageHeight = round(($ImageWidth * $OriginalImageHeight) / $OriginalImageWidth);
             }
         }
@@ -399,51 +429,53 @@ global $DontBreakOnBadPNGGDRoutines;
         $im2 = ImageCreateTrueColor($ThumbImageWidth, $ThumbImageHeight);
 // figure out the offsets within the thumbnail of the images
         $offx = $offy = 0;
-        if ($ImageWidth != $ThumbImageWidth || ($ImageHeight + $BannerHeight) != $ThumbImageHeight) {
+        if ($ImageWidth != $ThumbImageWidth || ($ImageHeight + $bannerHeight) != $ThumbImageHeight) {
             if ($bgcolor != '') {
                 $col = ImageColorAllocate($im2, hexdec('0x'.$bgcolor[0].$bgcolor[1]), hexdec('0x'.$bgcolor[2].$bgcolor[3]), hexdec('0x'.$bgcolor[4].$bgcolor[5]));
                 ImageFill($im2, 0, 0, $col);
             }
             if ($center) {
                 $offx = round(($ThumbImageWidth - $ImageWidth) / 2);
-                $offy = round(($ThumbImageHeight - $ImageHeight - $BannerHeight) / 2);
+                $offy = round(($ThumbImageHeight - $ImageHeight - $bannerHeight) / 2);
             }
         }
 
 #       Copy banner into place
         if ($hdbanner != '') {
             if ($DontBreakOnBadPNGGDRoutines) {
-////////////////DebugLog("PNG:$me_updating: $dvd[title] -- $newfilename:$z");
+////////////////debugLog("PNG:$me_updating: $dvd[title] -- $newfilename:$z");
 //              if (is_readable($newfilename)) {
-//                  DebugLog("$img_physpath$filename=".date("F d Y H:i:s.", filemtime($img_physpath.$filename)));
-//                  DebugLog("$newfilename=".date("F d Y H:i:s.", filemtime($newfilename)));
+//                  debugLog("$img_physpath$filename=".date("F d Y H:i:s.", filemtime($img_physpath.$filename)));
+//                  debugLog("$newfilename=".date("F d Y H:i:s.", filemtime($newfilename)));
 //              }
-                return('gfx/unknown.jpg');
+                return GFX_UNKNOWN;
             }
             $banner = ImageCreateFromPNG($hdbanner);
-            ImageCopyResampled ($im2, $banner, $offx, $offy, 0, 0, $ImageWidth, $BannerHeight, $OriginalBannerWidth, $OriginalBannerHeight);
+            ImageCopyResampled ($im2, $banner, $offx, $offy, 0, 0, $ImageWidth, $bannerHeight, $OriginalBannerWidth, $OriginalBannerHeight);
             ImageDestroy($banner);
-            $offy += $BannerHeight;
+            $offy += $bannerHeight;
         }
 #       Copy thumbnail into place
         $image = ImageCreateFromJpeg($img_physpath.$filename);
-        if ($OriginalImageWidth == $ImageWidth)
+        if ($OriginalImageWidth == $ImageWidth) {
             ImageCopy($im2, $image, $offx, $offy, 0, 0, $OriginalImageWidth, $OriginalImageHeight);
-        else
+        } else {
             ImageCopyResampled ($im2, $image, $offx, $offy, 0, 0, $ImageWidth, $ImageHeight, $OriginalImageWidth, $OriginalImageHeight);
+        }
         ImageDestroy($image);
-        if (file_exists($newfilename))
-            unlink($newfilename);   // get rid of any old file
+        if (file_exists($newfilename)) {
+            unlink($newfilename);
+        }   // get rid of any old file
         ImageJPEG($im2, $newfilename, $qual);
         ImageDestroy($im2);
         touch($newfilename);
     }
-    return($newfilename);
+    return $newfilename;
 }
 
 if (!function_exists('stripos')) {
     function stripos($haystack,$needle,$offset = 0) {
-        return(strpos(strtolower($haystack),strtolower($needle),$offset));
+        return strpos(strtolower($haystack),strtolower($needle),$offset);
     }
 }
 
@@ -662,7 +694,7 @@ global $db, $dbtype;
 
     if ($dbtype != 'mysql' && $dbtype != 'mysqli')
         return(true);       // This assumes that databases other than mysql will like the syntax
-    $ver = MySQLVersion();
+    $ver = mySqlVersion();
     list($major, $minor, $patch) = explode('.', $ver);
     $patch = (int)$patch;
     if ($major>4 || ($major==4 && ($minor>0 || ($minor==0 && $patch>=14))))
@@ -790,7 +822,7 @@ global $img_physpath, $thumbnails;
     }
     if (is_readable($dir.$name))
         return($name);
-//DebugLog('$dir='.$dir.', $name='.$name);
+//debugLog('$dir='.$dir.', $name='.$name);
     return('');
 }
 
@@ -837,7 +869,7 @@ global $debugSQL;
         return;
     $num_queries = $db->sql_num_queries();
     $thequeries = $db->sql_ret_queries();
-    DebugLog("$string: $num_queries$thequeries\n");
+    debugLog("$string: $num_queries$thequeries\n");
 }
 
 function GetLastUpdateTime($which) {
@@ -1005,7 +1037,7 @@ global $DontBreakOnBadPNGGDRoutines, $MediaTypes;
         $banner = @$MediaTypes[$addbanner]['Banner'];   // if the type doesn't exist, $banner will be set to empty string
         if ($banner != '' && is_readable($banner)) {
             if ($DontBreakOnBadPNGGDRoutines) {
-////////////////DebugLog("PNG2:GimmeAThumb -- $filename");
+////////////////debugLog("PNG2:GimmeAThumb -- $filename");
                 $filename = 'gfx/unknown.jpg';
             }
             else {
@@ -1023,14 +1055,14 @@ global $DontBreakOnBadPNGGDRoutines, $MediaTypes;
                 ImageCopy($newbitmap, $imim, 0, $newbannerheight, 0, 0, $imagewidth, $imageheight);
                 ImageDestroy($imim);
 
-                SendNoCacheHeaders('Content-Type: image/jpeg');
+                sendNoCacheHeaders('Content-Type: image/jpeg');
                 ImageJPEG($newbitmap, '', 100); // manual says to use NULL, but only '' seems to work
                 ImageDestroy($newbitmap);
                 return;
             }
         }
     }
-    SendNoCacheHeaders('Content-Type: image/jpeg');
+    sendNoCacheHeaders('Content-Type: image/jpeg');
     readfile($filename);
     return;
 }

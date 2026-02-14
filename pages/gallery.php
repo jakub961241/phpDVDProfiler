@@ -114,7 +114,7 @@ function format_addinfo (&$dvd){
 function show_profile(&$dvd, $bs = 'DVDs') {
     global $FnExt, $FnWebPath, $img_physpath, $getimages, $PHP_SELF, $plusgif, $DoBack, $name, $vname, $thumbnails, $imagewidth, $thumbqual, $ajax;
     $dvd['id'] = rtrim($dvd['id'], "\x00");
-    FormatTheTitle($dvd);
+    formatTheTitle($dvd);
     format_addinfo ($dvd);
 
     $esc_id = htmlspecialchars($dvd['id'], ENT_QUOTES, 'ISO-8859-1');
@@ -132,7 +132,7 @@ function show_profile(&$dvd, $bs = 'DVDs') {
         $tn = htmlspecialchars($FnWebPath.$thumbnails."/".$dvd['id'].$FnExt, ENT_QUOTES, 'ISO-8859-1');
     }
     else {
-        $tn = htmlspecialchars(PhyspathToWebpath(resize_jpg($dvd, ($DoBack?'b':'f'), $imagewidth, $thumbqual)), ENT_QUOTES, 'ISO-8859-1');
+        $tn = htmlspecialchars(physpathToWebpath(resizeJpg($dvd, ($DoBack?'b':'f'), $imagewidth, $thumbqual)), ENT_QUOTES, 'ISO-8859-1');
     }
 
     $boximg = $boxcode = '';
@@ -370,7 +370,7 @@ function site_header (){
             $search = ' ('.$lang['SEARCHED'].' '.$lang['CREDITS'].' '.$lang['FOR'].' "'.$stxt.'")';
             break;
         case 'genre':
-            $search = ' ('.$lang['SEARCHED'].' '.$lang['GENRES'].' '.$lang['FOR'].' "'.GenreTranslation($stxt).'")';
+            $search = ' ('.$lang['SEARCHED'].' '.$lang['GENRES'].' '.$lang['FOR'].' "'.genreTranslation($stxt).'")';
             break;
         case 'director':
             $search = ' ('.$lang['SEARCHED'].' '.$lang['DIRECTORS'].' '.$lang['FOR'].' "'.$stxt.'")';

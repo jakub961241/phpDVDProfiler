@@ -21,6 +21,6 @@ if (($n=strpos($mediaid, '-')) !== false) {
         $mediaid = 'I' . str_replace('-', '', $mediaid);
 }
 if ($TryToChangeMemoryAndTimeLimits) @ini_set('memory_limit', -1);
-SendNoCacheHeaders('Content-Type: image/jpeg');
-readfile(resize_jpg($mediaid, $side, $x, 100, $y, 'FFFFFF', false));
+sendNoCacheHeaders('Content-Type: image/jpeg');
+readfile(resizeJpg($mediaid, $side, $x, 100, $y, 'FFFFFF', false));
 exit;

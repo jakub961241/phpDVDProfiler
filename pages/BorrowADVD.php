@@ -17,7 +17,7 @@ include_once('global.php');
     if ($dvd['description'] != '')
         $name .= " ($dvd[description])";
 
-    SendNoCacheHeaders('Content-Type: text/html; charset="windows-1252";');
+    sendNoCacheHeaders('Content-Type: text/html; charset="windows-1252";');
 
     if (isset($emailaddr)) {
         setcookie('emailaddr', $emailaddr, ['path' => '/', 'httponly' => true, 'samesite' => 'Lax']);

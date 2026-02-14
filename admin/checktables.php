@@ -3,7 +3,7 @@
 defined('IN_SCRIPT') || define('IN_SCRIPT', 1);
 require_once __DIR__ . '/../bootstrap.php';
 include_once 'global.php';
-SendNoCacheHeaders('Content-Type: text/html; charset="windows-1252";');
+sendNoCacheHeaders('Content-Type: text/html; charset="windows-1252";');
 
 if (empty($GLOBALS['IsPrivate'])) {
     header("HTTP/1.0 403 Forbidden");
@@ -11,7 +11,7 @@ if (empty($GLOBALS['IsPrivate'])) {
     exit;
 }
 
-function DisplayAResultSet(&$db, $sql) {
+function displayAResultSet(&$db, $sql) {
     $result = $db->sql_query($sql);
     $firstrow = true;
     while ($row = $db->sql_fetchrow($result)) {
@@ -63,5 +63,5 @@ function DisplayAResultSet(&$db, $sql) {
 
     $request = "SELECT * FROM ".$db->sql_escape($table);
     echo "<html><head><title>Dump of table " . htmlspecialchars($table) . "</title></head><body>\n";
-    DisplayAResultSet($db, $request);
+    displayAResultSet($db, $request);
     echo "</body></html>\n";

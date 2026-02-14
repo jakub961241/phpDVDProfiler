@@ -4,7 +4,7 @@ defined('IN_SCRIPT') || define('IN_SCRIPT', 1);
 require_once __DIR__ . '/../bootstrap.php';
 include_once 'global.php';
 
-function CheckCommonTable($t1, $t2) {
+function checkCommonTable($t1, $t2) {
 global $db;
     $sql = "CREATE TEMPORARY TABLE TEMP_COMMON (caid int unique NOT NULL, count int unsigned NOT NULL default 0);";
     $db->sql_query($sql) or die($db->sql_error());
@@ -27,6 +27,6 @@ global $db;
 }
 
     echo "Checking Cast\n";
-    CheckCommonTable($DVD_ACTOR_TABLE, $DVD_COMMON_ACTOR_TABLE);
+    checkCommonTable($DVD_ACTOR_TABLE, $DVD_COMMON_ACTOR_TABLE);
     echo "Checking Crew\n";
-    CheckCommonTable($DVD_CREDITS_TABLE, $DVD_COMMON_CREDITS_TABLE);
+    checkCommonTable($DVD_CREDITS_TABLE, $DVD_COMMON_CREDITS_TABLE);

@@ -312,11 +312,11 @@ $lang_en_WISHNAME[6] = 'Not Set';
     $retval .= "\tDP_Genres[3] = \"" . (isset($dvd['genres'][3])?$dvd['genres'][3]:'') . "\";\r\n";
     $retval .= "\tDP_Genres[4] = \"" . (isset($dvd['genres'][4])?$dvd['genres'][4]:'') . "\";\r\n";
     $retval .= "\tvar DP_Genres_Translated = new Array(5);\r\n";
-    $retval .= "\tDP_Genres_Translated[0] = \"" . (isset($dvd['genres'][0])?GenreTranslation($dvd['genres'][0]):'') . "\";\r\n";
-    $retval .= "\tDP_Genres_Translated[1] = \"" . (isset($dvd['genres'][1])?GenreTranslation($dvd['genres'][1]):'') . "\";\r\n";
-    $retval .= "\tDP_Genres_Translated[2] = \"" . (isset($dvd['genres'][2])?GenreTranslation($dvd['genres'][2]):'') . "\";\r\n";
-    $retval .= "\tDP_Genres_Translated[3] = \"" . (isset($dvd['genres'][3])?GenreTranslation($dvd['genres'][3]):'') . "\";\r\n";
-    $retval .= "\tDP_Genres_Translated[4] = \"" . (isset($dvd['genres'][4])?GenreTranslation($dvd['genres'][4]):'') . "\";\r\n";
+    $retval .= "\tDP_Genres_Translated[0] = \"" . (isset($dvd['genres'][0])?genreTranslation($dvd['genres'][0]):'') . "\";\r\n";
+    $retval .= "\tDP_Genres_Translated[1] = \"" . (isset($dvd['genres'][1])?genreTranslation($dvd['genres'][1]):'') . "\";\r\n";
+    $retval .= "\tDP_Genres_Translated[2] = \"" . (isset($dvd['genres'][2])?genreTranslation($dvd['genres'][2]):'') . "\";\r\n";
+    $retval .= "\tDP_Genres_Translated[3] = \"" . (isset($dvd['genres'][3])?genreTranslation($dvd['genres'][3]):'') . "\";\r\n";
+    $retval .= "\tDP_Genres_Translated[4] = \"" . (isset($dvd['genres'][4])?genreTranslation($dvd['genres'][4]):'') . "\";\r\n";
     if ($comments) $retval .= "\r\n";
     if ($comments) $retval .= "// Studios\r\n";
     $retval .= "\tvar DP_Studios = new Array(3);\r\n";
@@ -552,7 +552,7 @@ global $dvd, $DVD_EVENTS_TABLE, $DVD_USERS_TABLE, $IsPrivate, $watched, $db, $la
         if ($row['timestamp'] != $ts)
             break;
         if ($ret != '') $ret .= $divider;
-        $row['lastname'] = HideName($row['lastname']);
+        $row['lastname'] = hideName($row['lastname']);
         $ret .= preg_replace('/\s\s+/', ' ', trim("$row[firstname] $row[lastname]"));
     }
     $db->sql_freeresult($res);
@@ -1130,7 +1130,7 @@ global $dvd, $lang, $IsPrivate;
 
     $ret = '';
     foreach ($dvd['events'] as $k => $e) {
-        $e['lastname'] = HideName($e['lastname']);
+        $e['lastname'] = hideName($e['lastname']);
         if ($ret != '') $ret .= $divider;
         $line = '';
         if ($showfullname) {

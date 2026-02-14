@@ -29,7 +29,7 @@ while ($row = $db->sql_fetchrow($result)) {
     }
     else {
         $data[$i] = $row['total'];
-        $name[$i] = html_entity_decode(GenreTranslation($row['genre'])."\n$fmt");
+        $name[$i] = html_entity_decode(genreTranslation($row['genre'])."\n$fmt");
         $order[$i] = strlen($name[$i]);
     }
     $i++;

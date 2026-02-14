@@ -348,14 +348,14 @@ EOT;
 ////////        $thisurl = "$mobilepage?mediaid=$actor[mediaid]&amp;action=show";
             $thisurl = "index.php?mediaid=$actor[mediaid]&amp;action=show";
 
-            FormatTheTitle($actor);
+            formatTheTitle($actor);
             if ($getimages > 0) {
                 if ($getimages == 3) {
                     $thumbs = "<img alt=\"\" width=80 height=112 src=\"{$img_webpathf}$thumbnails/$actor[mediaid]f.jpg\">";
                 }
                 else {
                     $actor['id'] = $actor['mediaid'];
-                    $thumbs = '<img alt="" width=80 height=112 src="' . resize_jpg($actor, 'f', 80, 100) . '">';
+                    $thumbs = '<img alt="" width=80 height=112 src="' . resizeJpg($actor, 'f', 80, 100) . '">';
                 }
             }
 
@@ -363,7 +363,7 @@ EOT;
             $genreres = $db->sql_query("SELECT genre FROM $DVD_GENRES_TABLE WHERE id='$actor[mediaid]' ORDER BY dborder") or die($db->sql_error());
             while ($genrow = $db->sql_fetchrow($genreres)) {
                 if ($actor['genres'] != '') $actor['genres'] .= ', ';
-                $actor['genres'] .= GenreTranslation($genrow['genre']);
+                $actor['genres'] .= genreTranslation($genrow['genre']);
             }
             $db->sql_freeresult($genreres);
             unset($genrow);

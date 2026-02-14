@@ -6,7 +6,7 @@ if (!defined('IN_SCRIPT'))
     define('IN_SCRIPT', 1);
 include_once('global.php');
 
-SendNoCacheHeaders('Content-Type: text/html; charset="windows-1252";');
+sendNoCacheHeaders('Content-Type: text/html; charset="windows-1252";');
 
     if (!isset($ChangedColor))
         $ChangedColor = 'Gold';
@@ -116,7 +116,7 @@ EOT;
             $valgen .= "\tif ($('genre_{$gen}_input').value == '1') genrecount++;\n";
             $genretable .= "<td><img style=\"vertical-align:middle\" onClick=\"SwitchState('genre_$gen')\" src=\"gfx/dontcare.png\""
                     ." id=\"genre_{$gen}_img\"><input type=\"hidden\" name=\"genre_$gen\" id=\"genre_{$gen}_input\""
-                    ." value=\"?\">&nbsp;".GenreTranslation($val['genre'])."</td>";
+                    ." value=\"?\">&nbsp;".genreTranslation($val['genre'])."</td>";
         }
     }
     $db->sql_freeresult($res);
@@ -259,7 +259,7 @@ EOT;
                 $name = $val['uid'];
                 $watchedby .=  "<td><img style=\"vertical-align:middle\" onClick=\"SwitchState('watched_$name')\" src=\"gfx/dontcare.png\""
                         ." id=\"watched_{$name}_img\"><input type=\"hidden\" name=\"watched_$name\" id=\"watched_{$name}_input\""
-                        ." value=\"?\">&nbsp;$val[firstname] " . HideName($val['lastname']) . "</td>";
+                        ." value=\"?\">&nbsp;$val[firstname] " . hideName($val['lastname']) . "</td>";
             }
             $watchedby .=  "</tr></table>\n";
         }

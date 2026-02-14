@@ -47,7 +47,7 @@ global $db, $lang, $inbrowser, $eoln, $table_prefix, $UpdateLast;
         }
     }
     fclose($sfh);
-    $UpdateLast = UpdateUpdateLast();   // There is no data in the db, so let everyone know
+    $UpdateLast = updateUpdateLast();   // There is no data in the db, so let everyone know
 }
 
 function interpretEscapedXml($subject) {
@@ -545,23 +545,23 @@ global $db, $DVD_TABLE;
 function HashData(&$data) {
 
     $colid = '';
-    $hashprofile = Hex(crc32($data));
+    $hashprofile = hex(crc32($data));
     $hashnocolid = $hashcast = $hashcrew = $hashprofile;
 
     if (($back = strpos($data, '</CollectionNumber>')) !== false) {
         $front = strpos($data, '<CollectionNumber>') + strlen('<CollectionNumber>');
         $colid = substr($data, $front, $back-$front);
-        $hashnocolid = Hex(crc32(substr($data, 0, $front).substr($data, $back)));
+        $hashnocolid = hex(crc32(substr($data, 0, $front).substr($data, $back)));
     }
 
     if (($back = strpos($data, '</Actors>')) !== false) {
         $front = strpos($data, '<Actors>') + strlen('<Actors>');
-        $hashcast = Hex(crc32(substr($data, $front, $back-$front)));
+        $hashcast = hex(crc32(substr($data, $front, $back-$front)));
     }
 
     if (($back = strpos($data, '</Credits>')) !== false) {
         $front = strpos($data, '<Credits>') + strlen('<Credits>');
-        $hashcrew = Hex(crc32(substr($data, $front, $back-$front)));
+        $hashcrew = hex(crc32(substr($data, $front, $back-$front)));
     }
 
     return(array('hashprofile' => $hashprofile, 'hashnocolid' => $hashnocolid, 'hashcast' => $hashcast, 'hashcrew' => $hashcrew, 'colid' => $colid));
@@ -583,7 +583,7 @@ global $pscommand, $eoln, $ReportOnMemory;
 function PrepareBrowserOutput() {
 global $lang;
 
-    SendNoCacheHeaders('Content-Type: text/html; charset="windows-1252";');
+    sendNoCacheHeaders('Content-Type: text/html; charset="windows-1252";');
     echo<<<EOT
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <html>
@@ -942,7 +942,7 @@ global $common_actor, $common_actor_stats, $common_credit, $common_credit_stats,
         $oldhashs = array();
         GetHashs($oldhashs);
 
-        ModifyTables('DISABLE');
+        modifyTables('DISABLE');
         echo $lang['IMPORTUPDATING'] . $eoln;   // database name
         if ($numxmlfiles != 1)
             printf($lang['IMPORTXMLDIR'].$eoln, $numxmlfiles, $xmldir);
@@ -1131,7 +1131,7 @@ global $common_actor, $common_actor_stats, $common_credit, $common_credit_stats,
         flush();
         @ob_flush();
         UpdateBoxSets();
-        ModifyTables('ENABLE');
+        modifyTables('ENABLE');
         $ppdelete = TidyPurchasePlace();
         $db->sql_query("UPDATE $DVD_PROPERTIES_TABLE SET value='-2||0|0|0|0|$MyConnectionId' WHERE property='CurrentPosition'") or safe_db_die();
     }

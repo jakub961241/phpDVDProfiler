@@ -2,7 +2,7 @@
 error_reporting(-1);
 
 $goterror = false;
-function myErrorHandler($errno, $errstr, $errfile, $errline) {
+function myErrorHandler($errno) {
 global $goterror;
     if ($errno != E_NOTICE) {
         return false;

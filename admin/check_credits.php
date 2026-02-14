@@ -3,7 +3,7 @@
 defined('IN_SCRIPT') || define('IN_SCRIPT', 1);
 require_once __DIR__ . '/../bootstrap.php';
 include_once 'global.php';
-SendNoCacheHeaders('Content-Type: text/html; charset="windows-1252";');
+sendNoCacheHeaders('Content-Type: text/html; charset="windows-1252";');
 
 /**
  * Execute a credits check query and display results

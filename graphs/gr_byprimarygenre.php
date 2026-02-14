@@ -24,7 +24,7 @@ while ($row = $db->sql_fetchrow($sql)) {
     }
     else {
         $data[$i] = $row['total'];
-        $name[$i] = html_entity_decode(GenreTranslation($row['primegenre'])."\n%.1f%%");
+        $name[$i] = html_entity_decode(genreTranslation($row['primegenre'])."\n%.1f%%");
         $order[$i] = strlen($name[$i]);
     }
     $i++;

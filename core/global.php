@@ -742,13 +742,13 @@ if ($db_Errors['code'] == 0) {
                     $masterauxcolltype = explode('/', substr($item['value'], 1));
                 break;
             case 'CurrentPosition':
-                $UpdateLast = UpdateUpdateLast($item['value']);
+                $UpdateLast = updateUpdateLast($item['value']);
                 break;
             }
         }
         $db->sql_freeresult($result);
         if (!isset($UpdateLast)) {
-            $UpdateLast = UpdateUpdateLast();
+            $UpdateLast = updateUpdateLast();
             $result = $db->sql_query("SELECT CONNECTION_ID() AS Id") or die($db->sql_error());
             $item = $db->sql_fetchrow($result);
             $db->sql_query("INSERT IGNORE INTO $DVD_PROPERTIES_TABLE (property,value) VALUES ('CurrentPosition','0||0|0|0|0|".$db->sql_escape($item['Id'])."')") or die($db->sql_error());

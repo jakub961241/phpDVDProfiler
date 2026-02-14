@@ -711,7 +711,7 @@ if ($rss_report_leafs) {
 // This should use the symbols for locations
                     echo "          <img src=\"$collectionurl$img_webpath/$thumbnails/$dvd[id]f.jpg\"><br>\n";
                 } else {
-                    echo "          <img src=\"".$collectionurl.resize_jpg($dvd, 'f', $rss_thumbnail_width, 100)."\" vspace=\"2\" hspace=\"14\" border=\"1\" align=\"left\">\n";
+                    echo "          <img src=\"".$collectionurl.resizeJpg($dvd, 'f', $rss_thumbnail_width, 100)."\" vspace=\"2\" hspace=\"14\" border=\"1\" align=\"left\">\n";
                 }
             }
         }

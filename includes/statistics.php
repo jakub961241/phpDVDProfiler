@@ -12,7 +12,7 @@ function MakeAPercentage($value, $total, $decimals=0) {
     return($frac);
 }
 
-    if (!$ajax) SendNoCacheHeaders('Content-Type: text/html; charset="windows-1252";');
+    if (!$ajax) sendNoCacheHeaders('Content-Type: text/html; charset="windows-1252";');
 
     if (!DisplayIfIsPrivateOrAlways($handleadult)) {
         $noadult = "AND isadulttitle=0";
@@ -500,7 +500,7 @@ EOT;
         printf("<tr><td class=f3np>%s</td>"
             ."<td align=center class=f2np>$centertable</td>"
             ."<td align=center class=f2np>$centertable</td></tr>\n",
-            GenreTranslation($key),
+            genreTranslation($key),
             $genre[$key]['primetotal'], $genre[$key]['primefrac'],
             $genre[$key]['alltotal'], $genre[$key]['allfrac']);
     }

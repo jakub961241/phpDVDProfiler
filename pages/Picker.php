@@ -13,7 +13,7 @@ global $getimages, $img_webpathf, $thumbnails;
             $thumbs = "<img alt=\"\" width=60 height=84 src=\"{$img_webpathf}$thumbnails/[$id]f.jpg\">";
         }
         else {
-            $thumbs = '<img alt="" width=60 height=84 src="' . resize_jpg($id, 'f', 60, 100) . '">';
+            $thumbs = '<img alt="" width=60 height=84 src="' . resizeJpg($id, 'f', 60, 100) . '">';
         }
     }
     return($thumbs);
@@ -406,7 +406,7 @@ global $getimages, $img_webpathf, $thumbnails;
     else
         $MainQuery = htmlspecialchars($MainQuery, ENT_QUOTES, 'ISO-8859-1');
 
-    SendNoCacheHeaders('Content-Type: text/html; charset="windows-1252";');
+    sendNoCacheHeaders('Content-Type: text/html; charset="windows-1252";');
     $esc_chooser = htmlspecialchars($lang['CHOOSEREXECUTION'] ?? '', ENT_QUOTES, 'ISO-8859-1');
     $esc_querytime = htmlspecialchars($querytime, ENT_QUOTES, 'ISO-8859-1');
 
