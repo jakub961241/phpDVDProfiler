@@ -47,10 +47,10 @@ global $getimages, $img_webpathf, $thumbnails;
     }
     $InMenu = '0';
     if (isset($_GET['InMenu']))
-        $InMenu = $_GET['InMenu'];
+        $InMenu = ($_GET['InMenu'] === '1') ? '1' : '0';
     $limit = 5;
     if (isset($_POST['limit']))
-        $limit = $db->sql_escape($_POST['limit']);
+        $limit = max(1, intval($_POST['limit']));
 
     $where = '';
     $needtable = array('actor' => false, 'cactor' => false, 'credit' => false, 'ccredit' => false, 'genre' => false, 'studio' => false);
@@ -74,7 +74,7 @@ global $getimages, $img_webpathf, $thumbnails;
                 $tmp = '(';
                 while ($zzz = $db->sql_fetch_array($result)) {
                     if ($tmp != '(') $tmp .= ',';
-                    $tmp .= "'$zzz[id]'";
+                    $tmp .= "'".$db->sql_escape($zzz['id'])."'";
                 }
                 $db->sql_freeresult($result);
                 if ($tmp != '(') {
@@ -88,14 +88,15 @@ global $getimages, $img_webpathf, $thumbnails;
             if ($value != '?') {
                 $tagname = $db->sql_escape(urldecode(substr($key, 4)));
                 $sql = "SELECT DISTINCT id FROM $DVD_TAGS_TABLE WHERE fullyqualifiedname='$tagname'";
-                $res = $db->sql_query($sql) or die($db->sql_error());
-                if ($db->sql_numrows($res) != 0) {
+                $res = $db->sql_query($sql);
+                if ($res && $db->sql_numrows($res) != 0) {
                     $seen = ' AND (';
                     while ($val = $db->sql_fetchrow($res)) {
+                        $esc_val_id = $db->sql_escape($val['id']);
                         if ($value == '1')
-                            $seen .= " d.id='$val[id]' OR";
+                            $seen .= " d.id='$esc_val_id' OR";
                         else
-                            $seen .= " d.id!='$val[id]' AND";
+                            $seen .= " d.id!='$esc_val_id' AND";
                     }
                     $seen = str_replace('AND)', ')', str_replace('OR)', ')', $seen.')'));
                     $where .= $seen;
@@ -106,15 +107,17 @@ global $getimages, $img_webpathf, $thumbnails;
         if (substr($key, 0, 8) == 'watched_') {
             if ($value != '?') {
                 $uid = $db->sql_escape(urldecode(substr($key, 8)));
-                $sql = "SELECT DISTINCT id FROM $DVD_EVENTS_TABLE WHERE uid=$uid AND eventtype='watched'";
-                $res = $db->sql_query($sql) or die($db->sql_error());
-                if ($db->sql_numrows($res) != 0) {
+                $uid_int = intval($uid);
+                $sql = "SELECT DISTINCT id FROM $DVD_EVENTS_TABLE WHERE uid=$uid_int AND eventtype='watched'";
+                $res = $db->sql_query($sql);
+                if ($res && $db->sql_numrows($res) != 0) {
                     $seen = ' AND (';
                     while ($val = $db->sql_fetchrow($res)) {
+                        $esc_val_id = $db->sql_escape($val['id']);
                         if ($value == '1')
-                            $seen .= " d.id='$val[id]' OR";
+                            $seen .= " d.id='$esc_val_id' OR";
                         else
-                            $seen .= " d.id!='$val[id]' AND";
+                            $seen .= " d.id!='$esc_val_id' AND";
                     }
                     $seen = str_replace('AND)', ')', str_replace('OR)', ')', $seen.')'));
                     $where .= $seen;
@@ -304,7 +307,7 @@ global $getimages, $img_webpathf, $thumbnails;
                 $ctype = $db->sql_fetchrow($res);
                 $db->sql_freeresult($res);
                 if (isset($ctype) && $ctype !== false) {
-                    $where .= " AND $key='$ctype[collectiontype]'";
+                    $where .= " AND $key='".$db->sql_escape($ctype['collectiontype'])."'";
                 } else if (isset($masterauxcolltype[$value])) {
                     $where .= " AND auxcolltype LIKE '%/".$db->sql_escape($masterauxcolltype[$value])."/%'";
                 } else {
@@ -315,17 +318,25 @@ global $getimages, $img_webpathf, $thumbnails;
             }
             break;
         default:
+            // Whitelist: only allow known column names as keys to prevent SQL injection
+            $allowed_columns = array('isadulttitle', 'widescreen', 'sideA', 'sideB', 'duallayersideA', 'duallayersideB',
+                'panAndScan', 'fullFrame', 'letterbox', 'enhanced16x9', 'originalaspect', 'colorColor', 'colorBW',
+                'colorColorized', 'colorMixed', 'casecheckdigit', 'caseunknown', 'caseclear', 'casesnapper',
+                'casedigipack', 'collectiontype', 'countryoforigin', 'custommediatype', 'loaninfo');
+            if (!preg_match('/^[a-zA-Z_][a-zA-Z0-9_]*$/', $key) || !in_array($key, $allowed_columns)) {
+                break; // skip unknown/invalid column names
+            }
             switch ($value) {
             case '?':
                 break;
             case 1:
-                $where .= " AND ".$db->sql_escape($key)."=1";
+                $where .= " AND `".$key."`=1";
                 break;
             case -1:
-                $where .= " AND ".$db->sql_escape($key)."=0";
+                $where .= " AND `".$key."`=0";
                 break;
             default:
-                $where .= " AND ".$db->sql_escape($key)."='".$db->sql_escape($value)."'";
+                $where .= " AND `".$key."`='".$db->sql_escape($value)."'";
                 break;
             }
         }
@@ -368,7 +379,8 @@ global $getimages, $img_webpathf, $thumbnails;
     $MainQuery = str_replace('WHERE AND', 'WHERE', $MainQuery);
 
     $t0 = microtime_float();
-    $res = $db->sql_query($MainQuery) or die($db->sql_error());
+    $res = $db->sql_query($MainQuery);
+    if (!$res) { error_log('Picker query failed: ' . print_r($db->sql_error(), true)); die('Database query failed.'); }
     $querytime = number_format(microtime_float() - $t0, 3, $lang['MON_DECIMAL_POINT'], $lang['MON_THOUSANDS_SEP']);
     $count = 1;
     $results = '<table><tr>';
@@ -376,10 +388,12 @@ global $getimages, $img_webpathf, $thumbnails;
         if (($count++ % 5) == 1)
             $results .= '</tr><tr>';
         $thumbs = GetThumbFromId($row['id']);
+        $esc_id = htmlspecialchars($row['id'], ENT_QUOTES, 'ISO-8859-1');
+        $esc_title = htmlspecialchars($row['title'], ENT_QUOTES, 'ISO-8859-1');
         if ($InMenu == '0')
-            $results .= "<td valign=top align=center width=\"20%\"><a href='index.php?lastmedia=$row[id]' target='phpdvd'>$thumbs<br>$row[title]</a></td>";
+            $results .= "<td valign=top align=center width=\"20%\"><a href='index.php?lastmedia=$esc_id' target='phpdvd'>$thumbs<br>$esc_title</a></td>";
         else
-            $results .= "<td valign=top align=center width=\"20%\"><a href='index.php?mediaid=$row[id]&amp;action=show' target='entry'>$thumbs<br>$row[title]</a></td>";
+            $results .= "<td valign=top align=center width=\"20%\"><a href='index.php?mediaid=$esc_id&amp;action=show' target='entry'>$thumbs<br>$esc_title</a></td>";
     }
     $db->sql_freeresult($res);
     if ($results == '<table><tr>')
@@ -389,8 +403,12 @@ global $getimages, $img_webpathf, $thumbnails;
 
     if (!$ShowSQLInPicker)
         $MainQuery = '';
+    else
+        $MainQuery = htmlspecialchars($MainQuery, ENT_QUOTES, 'ISO-8859-1');
 
     SendNoCacheHeaders('Content-Type: text/html; charset="windows-1252";');
+    $esc_chooser = htmlspecialchars($lang['CHOOSEREXECUTION'] ?? '', ENT_QUOTES, 'ISO-8859-1');
+    $esc_querytime = htmlspecialchars($querytime, ENT_QUOTES, 'ISO-8859-1');
 
     echo <<<EOT
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
@@ -399,7 +417,7 @@ global $getimages, $img_webpathf, $thumbnails;
 </head>
 <body class=f6>
 $results<br>$pre$MainQuery
-<br>$lang[CHOOSEREXECUTION]: $querytime
+<br>$esc_chooser: $esc_querytime
 </body>
 </html>
 EOT;

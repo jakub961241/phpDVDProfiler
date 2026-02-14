@@ -40,7 +40,7 @@ function get_children($id,$bs){
         show_profile($dvd, $bs);
         if ($dvd['boxchild'] != 0){
             $nbs = "bs".str_replace('.', '_', $dvd['id']);
-            echo "   <div class=\"".$plusclass."\" id=\"".$nbs."\">\n";
+            echo "   <div class=\"".htmlspecialchars($plusclass, ENT_QUOTES, 'ISO-8859-1')."\" id=\"".htmlspecialchars($nbs, ENT_QUOTES, 'ISO-8859-1')."\">\n";
             get_children($dvd['id'],$nbs);
             echo "   </div>\n";
         }
@@ -116,56 +116,55 @@ function show_profile(&$dvd, $bs = 'DVDs') {
     $dvd['id'] = rtrim($dvd['id'], "\x00");
     FormatTheTitle($dvd);
     format_addinfo ($dvd);
+
+    $esc_id = htmlspecialchars($dvd['id'], ENT_QUOTES, 'ISO-8859-1');
+    $esc_title = htmlspecialchars($dvd['title'], ENT_QUOTES, 'ISO-8859-1');
+    $esc_addinfo = htmlspecialchars($dvd['addinfo'] ?? '', ENT_QUOTES, 'ISO-8859-1');
+
     if (file_exists($img_physpath.$dvd['id'].$FnExt)){
-        $img = $FnWebPath.$dvd['id'].$FnExt;
+        $img = htmlspecialchars($FnWebPath.$dvd['id'].$FnExt, ENT_QUOTES, 'ISO-8859-1');
     }
     else {
         $img = "gfx/unknown.jpg";
     }
 
     if ($getimages == 3) {
-        $tn = $FnWebPath.$thumbnails."/".$dvd['id'].$FnExt;
+        $tn = htmlspecialchars($FnWebPath.$thumbnails."/".$dvd['id'].$FnExt, ENT_QUOTES, 'ISO-8859-1');
     }
-// The previous code looks to see if there is an image file (looking in the thumbnails directory) and
-// failing that it uses the unknown-image jpg. The resize_jpg() code does much the same thing, but
-// checks places like the imagecache and tries to use the main image if the thumb is missing.
-//  elseif (($name=find_a_file($dvd['id'], !$DoBack)) != '') {
-//      $tn = PhyspathToWebpath(resize_jpg($dvd, ($DoBack?'b':'f'), $imagewidth, $thumbqual));
-//  }
-//  else {
-//      $tn = "gfx/unknown.jpg";
-//  }
     else {
-        $tn = PhyspathToWebpath(resize_jpg($dvd, ($DoBack?'b':'f'), $imagewidth, $thumbqual));
+        $tn = htmlspecialchars(PhyspathToWebpath(resize_jpg($dvd, ($DoBack?'b':'f'), $imagewidth, $thumbqual)), ENT_QUOTES, 'ISO-8859-1');
     }
 
     $boximg = $boxcode = '';
+    $esc_bs = htmlspecialchars($bs, ENT_QUOTES, 'ISO-8859-1');
 
     if ($dvd['boxchild'] != 0 ){
         $nbs = "bs". str_replace('.', '_', $dvd['id']);
-        $boximg = '<img src="'.$plusgif.'" onclick="dh(\''.$nbs.'\',this)" alt = "">';
+        $esc_nbs = htmlspecialchars($nbs, ENT_QUOTES, 'ISO-8859-1');
+        $boximg = '<img src="'.htmlspecialchars($plusgif, ENT_QUOTES, 'ISO-8859-1').'" onclick="dh(\''.htmlspecialchars($nbs, ENT_QUOTES, 'ISO-8859-1').'\',this)" alt = "">';
         $boxcode = "   <div class = \"plusbox\">\n"
                 ."   ".$boximg."\n"
-                ."    <a href=\"".$img."\" rel=\"lightbox[".$nbs."]\" dvdlink=\"&lt;a href=&quot;$PHP_SELF?mediaid={$dvd['id']}&amp;action=show&quot;&gt;{$dvd['title']}{$dvd['addinfo']}&lt;/a&gt;\"></a>\n"
+                ."    <a href=\"".$img."\" rel=\"lightbox[".$esc_nbs."]\" dvdlink=\"&lt;a href=&quot;$PHP_SELF?mediaid={$esc_id}&amp;action=show&quot;&gt;{$esc_title}{$esc_addinfo}&lt;/a&gt;\"></a>\n"
                 ."   </div>\n";
     }
 
     if ($ajax) {
         // AJAX mode: use loadDvdContent for navigation
-        $dvdLink = "href=\"#\" data-mediaid=\"{$dvd['id']}\" onclick=\"loadDvdContent('{$dvd['id']}');return false;\"";
+        $js_id = htmlspecialchars(addslashes($dvd['id']), ENT_QUOTES, 'ISO-8859-1');
+        $dvdLink = "href=\"#\" data-mediaid=\"{$esc_id}\" onclick=\"loadDvdContent('{$js_id}');return false;\"";
     } else {
-        $dvdLink = "href=\"".$PHP_SELF."?mediaid=".$dvd['id']."&amp;action=show\"";
+        $dvdLink = "href=\"".htmlspecialchars($PHP_SELF, ENT_QUOTES, 'ISO-8859-1')."?mediaid=".$esc_id."&amp;action=show\"";
     }
     echo "   <div class = \"gallery\">\n".
          "    <div class = \"picbox\">\n".
          "     <div class = \"bigbox\">\n".
-         "      <a href=\"".$img."\" rel=\"lightbox[".$bs."]\" dvdlink=\"&lt;a href=&quot;$PHP_SELF?mediaid={$dvd['id']}&amp;action=show&quot;&gt;{$dvd['title']}{$dvd['addinfo']}&lt;/a&gt;\">\n".
+         "      <a href=\"".$img."\" rel=\"lightbox[".$esc_bs."]\" dvdlink=\"&lt;a href=&quot;$PHP_SELF?mediaid={$esc_id}&amp;action=show&quot;&gt;{$esc_title}{$esc_addinfo}&lt;/a&gt;\">\n".
          "       <img src=\"gfx/big.gif\" style=\"border:0 none;width:13px;height:13px\" alt = \"\">\n".
          "      </a>\n".
          "     </div>\n".
-         "     <a $dvdLink title=\"".$dvd['title']."\">\n".
-         "     <img src=\"".$tn."\" alt = \"".$dvd['title']."\"><br />\n".
-         "     <span class=\"print\">".$dvd['title'].$dvd['addinfo']."</span></a>\n";
+         "     <a $dvdLink title=\"".$esc_title."\">\n".
+         "     <img src=\"".$tn."\" alt = \"".$esc_title."\"><br />\n".
+         "     <span class=\"print\">".$esc_title.$esc_addinfo."</span></a>\n";
     echo $boxcode;
     echo "    </div>\n".
          "   </div>\n";
@@ -356,7 +355,7 @@ function site_header (){
             //$tmp = $ct;
             break;
     }
-    $stxt = htmlentities(stripslashes(stripslashes($searchtext)));
+    $stxt = htmlentities($searchtext);
     switch ($searchby) {
         case '':
             $search = '';
@@ -474,7 +473,7 @@ function site_footer(){
   </p>
   <p>
     <?php
-    $link = $PHP_SELF."?".str_replace ( '&', '&amp;',$_SERVER['QUERY_STRING'] )."&amp;showall=true";
+    $link = htmlspecialchars($PHP_SELF."?".$_SERVER['QUERY_STRING']."&showall=true", ENT_QUOTES, 'ISO-8859-1');
     echo "     <a href=\"".$link."\" class=\"f4\" style=\"background-color:transparent\">Show all</a>\n";
     ?>
   </p>
@@ -613,7 +612,8 @@ function get_SQL($page, $dpp = 60){
         $nobox = "";
     }
 
-    $start = ($page-1)*$dpp;
+    $start = intval(($page-1)*$dpp);
+    $dpp = intval($dpp);
 
     $limits = "";
     if (!$_GET['showall']) $limits = "LIMIT $start, $dpp";
@@ -797,7 +797,7 @@ function get_SQL($page, $dpp = 60){
 
 // searchtext escaping is handled below via $db->sql_escape() when $db is available
 if (!isset ($_GET['$printall'])) $_GET['$printall'] = false;
-if (!isset ($_GET['showall'])) $_GET['showall'] = false;
+$_GET['showall'] = !empty($_GET['showall']);
 
 if ($TitlesPerPage == 0)
     $dpp=60;
@@ -847,14 +847,18 @@ else
         $searchtext = '';
 
     if (isset ($_GET['letter']))
-        $letter = $_GET['letter'];
+        $letter = preg_replace('/[^A-Za-z0-9]/', '', substr($_GET['letter'], 0, 1));
     else
         $letter = '';
 
     if (!isset ($_GET['ct']))
         $ct = 'owned';
-    else
+    else {
         $ct = $_GET['ct'];
+        $allowed_ct = array('owned', 'ordered', 'wishlist', 'loaned', 'all');
+        if (!in_array($ct, $allowed_ct) && !is_numeric($ct) && substr($ct, 0, strlen('FJW-')) !== 'FJW-')
+            $ct = 'owned';
+    }
 
     if (!isset ($_GET['mediaid'])){
         switch ($InitialRightFrame){
@@ -892,7 +896,7 @@ $plusclass = 'hide';
 if (!isset($_GET['page']))
     $page=1;
 else
-    $page = $_GET['page'];
+    $page = max(1, intval($_GET['page']));
 
 
 $sql = get_SQL($page,$dpp);
@@ -915,14 +919,14 @@ while($dvd = $db->sql_fetch_array($result)) {
             $vname = $name;
 
     if (!empty($name))
-            echo "   <a name=\"".$name."\"></a>\n";
+            echo "   <a name=\"".htmlspecialchars($name, ENT_QUOTES, 'ISO-8859-1')."\"></a>\n";
 
     if (isset ($_GET['searchby']) && !empty ($_GET['searchby'])) $dvd['boxchild'] = 0;
     show_profile($dvd);
 
     if ($dvd['boxchild'] != 0){
         $bs = "bs".str_replace('.', '_', $dvd['id']);
-        echo " <div  class=\"".$plusclass."\" id=\"".$bs."\">\n";
+        echo " <div  class=\"".htmlspecialchars($plusclass, ENT_QUOTES, 'ISO-8859-1')."\" id=\"".htmlspecialchars($bs, ENT_QUOTES, 'ISO-8859-1')."\">\n";
         get_children($dvd['id'],$bs);
         echo " </div>\n";
     }

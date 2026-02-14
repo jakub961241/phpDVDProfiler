@@ -181,12 +181,12 @@ class sql_db
 
                     if ($this->query_result)
                     {
-                        $this->sql_report .= "Time before:  $curtime\nTime after:   $endtime\nElapsed time: <b>" . ($endtime - $curtime) . "</b>\n</pre>";
+                        $this->sql_report .= "Time before:  " . htmlspecialchars($curtime, ENT_COMPAT, 'ISO-8859-1') . "\nTime after:   " . htmlspecialchars($endtime, ENT_COMPAT, 'ISO-8859-1') . "\nElapsed time: <b>" . htmlspecialchars($endtime - $curtime, ENT_COMPAT, 'ISO-8859-1') . "</b>\n</pre>";
                     }
                     else
                     {
                         $error = $this->sql_error();
-                        $this->sql_report .= '<b>FAILED</b> - MySQL Error ' . $error['code'] . ': ' . htmlspecialchars($error['message'], ENT_COMPAT, 'ISO-8859-1') . '<br><br><pre>';
+                        $this->sql_report .= '<b>FAILED</b> - MySQL Error ' . htmlspecialchars($error['code'], ENT_COMPAT, 'ISO-8859-1') . ': ' . htmlspecialchars($error['message'], ENT_COMPAT, 'ISO-8859-1') . '<br><br><pre>';
                     }
 
                     $this->sql_time += $endtime - $curtime;
@@ -202,9 +202,9 @@ class sql_db
                                 {
                                     $html_table = TRUE;
                                     $this->sql_report .= "<table width=100% border=1 cellpadding=2 cellspacing=1>\n";
-                                    $this->sql_report .= "<tr>\n<td><b>" . implode("</b></td>\n<td><b>", array_keys($row)) . "</b></td>\n</tr>\n";
+                                    $this->sql_report .= "<tr>\n<td><b>" . implode("</b></td>\n<td><b>", array_map(function($v) { return htmlspecialchars($v, ENT_COMPAT, 'ISO-8859-1'); }, array_keys($row))) . "</b></td>\n</tr>\n";
                                 }
-                                $this->sql_report .= "<tr>\n<td>" . implode("&nbsp;</td>\n<td>", array_values($row)) . "&nbsp;</td>\n</tr>\n";
+                                $this->sql_report .= "<tr>\n<td>" . implode("&nbsp;</td>\n<td>", array_map(function($v) { return htmlspecialchars($v ?? '', ENT_COMPAT, 'ISO-8859-1'); }, array_values($row))) . "&nbsp;</td>\n</tr>\n";
                             }
                         }
 
@@ -465,7 +465,8 @@ class sql_db
 
     function sql_escape($msg)
     {
-        return mysqli_real_escape_string($this->db_connect_id, stripslashes($msg));
+        // stripslashes removed - magic_quotes_gpc was removed in PHP 5.4
+        return mysqli_real_escape_string($this->db_connect_id, $msg);
     }
 
     function sql_error($sql = '')
@@ -489,10 +490,16 @@ class sql_db
             if (isset($_SERVER['QUERY_STRING']) && !empty($_SERVER['QUERY_STRING'])) $the_query = $_SERVER['QUERY_STRING'];
             if (empty($the_query) && isset($_ENV['QUERY_STRING'])) $the_query = $_ENV['QUERY_STRING'];
 
-            $this_page = (!empty($_SERVER['PHP_SELF'])) ? $_SERVER['PHP_SELF'] : $_ENV['PHP_SELF'];
+            $this_page = (!empty($_SERVER['PHP_SELF'])) ? $_SERVER['PHP_SELF'] : ($_ENV['PHP_SELF'] ?? '');
             $this_page .= '&' . $the_query;
 
-            $message = '<u>SQL ERROR</u> [ ' . SQL_LAYER . ' ]<br /><br />' . @mysqli_error($this->db_connect_id) . '<br /><br /><u>CALLING PAGE</u><br /><br />'  . $this_page . (($sql != '') ? '<br /><br /><u>SQL</u><br /><br />' . $sql : '') . '<br />';
+            // Escape all user-controllable and internal data to prevent XSS
+            $esc_layer = htmlspecialchars(SQL_LAYER, ENT_QUOTES, 'ISO-8859-1');
+            $esc_error = htmlspecialchars(@mysqli_error($this->db_connect_id), ENT_QUOTES, 'ISO-8859-1');
+            $esc_page = htmlspecialchars($this_page, ENT_QUOTES, 'ISO-8859-1');
+            $esc_sql = ($sql != '') ? '<br /><br /><u>SQL</u><br /><br />' . htmlspecialchars($sql, ENT_QUOTES, 'ISO-8859-1') : '';
+
+            $message = '<u>SQL ERROR</u> [ ' . $esc_layer . ' ]<br /><br />' . $esc_error . '<br /><br /><u>CALLING PAGE</u><br /><br />'  . $esc_page . $esc_sql . '<br />';
             trigger_error($message, E_USER_ERROR);
         }
         return $result;
